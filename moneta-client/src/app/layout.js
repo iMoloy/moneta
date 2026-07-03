@@ -1,0 +1,28 @@
+import "./globals.css";
+
+export const metadata = {
+  title: "Moneta | Secure Mobile Wallet",
+  description: "Secure, modern mobile wallet for simple financial transactions.",
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" data-theme="light">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+        />
+      </head>
+      <body className="min-h-screen flex justify-center bg-[#F4F5F7]">
+        <div className="w-full max-w-md bg-white shadow-2xl min-h-screen relative flex flex-col">
+          {children}
+        </div>
+      </body>
+    </html>
+  );
+}
+
