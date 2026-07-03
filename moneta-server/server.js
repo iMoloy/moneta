@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./auth.js";
 
 // Load configuration
 dotenv.config();
@@ -16,6 +18,9 @@ app.use(
     credentials: true,
   })
 );
+
+// Better Auth routes handler
+app.all("/api/auth/*", toNodeHandler(auth));
 
 app.use(express.json());
 

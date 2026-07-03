@@ -7,6 +7,16 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
     phone: {
       type: String,
       required: true,
@@ -32,6 +42,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: "user", // Explicitly align with Better Auth collection name
   }
 );
 
