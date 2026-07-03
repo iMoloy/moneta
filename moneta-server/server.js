@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./auth.js";
+import walletRouter from "./routes/wallet.js";
 
 // Load configuration
 dotenv.config();
@@ -23,6 +24,9 @@ app.use(
 app.all("/api/auth/*", toNodeHandler(auth));
 
 app.use(express.json());
+
+// Wallet API Routes
+app.use("/api/wallet", walletRouter);
 
 // Basic sanity check route
 app.get("/api/health", (req, res) => {
