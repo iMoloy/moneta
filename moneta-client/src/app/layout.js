@@ -1,4 +1,7 @@
 import "./globals.css";
+import { BankProvider } from "@/context/BankContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const metadata = {
   title: "Moneta | Secure Mobile Wallet",
@@ -19,7 +22,10 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen flex justify-center bg-[#F4F5F7]">
         <div className="w-full max-w-md bg-white shadow-2xl min-h-screen relative flex flex-col">
-          {children}
+          <BankProvider>
+            {children}
+            <ToastContainer position="top-center" autoClose={2000} />
+          </BankProvider>
         </div>
       </body>
     </html>
