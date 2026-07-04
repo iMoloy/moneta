@@ -7,6 +7,7 @@ const db = client.db();
 
 export const auth = betterAuth({
   database: mongodbAdapter(db),
+  trustedOrigins: ["http://localhost:3000"],
   emailAndPassword: {
     enabled: true,
   },
