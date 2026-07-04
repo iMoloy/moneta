@@ -4,24 +4,42 @@ import { BankContext } from "@/context/BankContext";
 import { InputGroup, ActionButton } from "@/components/Form";
 import Link from "next/link";
 
-export default function Login() {
-  const { login, loading } = useContext(BankContext);
+export default function Register() {
+  const { register, loading } = useContext(BankContext);
+  
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [pin, setPin] = useState("");
   const [errors, setErrors] = useState({});
 
   const validate = () => {
     const tempErrors = {};
     const cleanPhone = phone.trim();
+    const cleanName = name.trim();
+
+    if (!cleanName) {
+      tempErrors.name = "Full Name is required.";
+    } else if (cleanName.length < 3) {
+      tempErrors.name = "Name must be at least 3 characters.";
+    }
 
     if (!cleanPhone) {
-      tempErrors.phone = "Phone number is required.";
+      tempErrors.phone = "Mobile number is required.";
     } else if (!/^01\d{9}$/.test(cleanPhone)) {
       tempErrors.phone = "Invalid format. Must be 11 digits (e.g. 01XXXXXXXXX).";
     }
 
     if (!password) {
       tempErrors.password = "Password is required.";
+    } else if (password.length < 6) {
+      tempErrors.password = "Password must be at least 6 characters.";
+    }
+
+    if (!pin) {
+      tempErrors.pin = "4-digit security PIN is required.";
+    } else if (!/^\d{4}$/.test(pin)) {
+      tempErrors.pin = "PIN must be exactly 4 digits.";
     }
 
     setErrors(tempErrors);
@@ -31,7 +49,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
-      await login(phone, password);
+      await register(name, phone, password, pin);
     }
   };
 
@@ -50,13 +68,22 @@ export default function Login() {
         </p>
       </div>
 
-      {/* Login Card */}
+      {/* Registration Card */}
       <div className="w-full bg-white p-8 rounded-[2rem] shadow-xl border border-gray-100/50">
         <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">
-          Access Your Wallet
+          Create Your Account
         </h2>
         
         <form onSubmit={handleSubmit}>
+          <InputGroup
+            label="Full Name"
+            type="text"
+            placeholder="John Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            iconClass="fa-solid fa-user"
+            error={errors.name}
+          />
           <InputGroup
             label="Mobile Number"
             type="text"
@@ -68,7 +95,7 @@ export default function Login() {
             error={errors.phone}
           />
           <InputGroup
-            label="Password"
+            label="Login Password"
             type="password"
             placeholder="••••••••"
             value={password}
@@ -76,9 +103,19 @@ export default function Login() {
             iconClass="fa-solid fa-lock"
             error={errors.password}
           />
+          <InputGroup
+            label="4-Digit Security PIN"
+            type="password"
+            placeholder="••••"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            max="4"
+            iconClass="fa-solid fa-key"
+            error={errors.pin}
+          />
           
           <div className="mt-6">
-            <ActionButton loading={loading}>Sign In</ActionButton>
+            <ActionButton loading={loading}>Sign Up</ActionButton>
           </div>
         </form>
       </div>
@@ -86,12 +123,12 @@ export default function Login() {
       {/* Redirect footer */}
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-500 font-medium">
-          New to Moneta?{" "}
+          Already have an account?{" "}
           <Link
-            href="/register"
+            href="/"
             className="text-indigo-600 font-bold hover:underline transition-all"
           >
-            Create an Account
+            Sign In
           </Link>
         </p>
       </div>
