@@ -12,7 +12,6 @@ export default function Dashboard() {
     transactions,
     loading,
     logout,
-    fetchTransactions,
     addMoney,
     cashOut,
     transfer,
@@ -22,13 +21,13 @@ export default function Dashboard() {
 
   const router = useRouter();
 
-  // Navigation states
-  const [view, setView] = useState("home"); // home, history, profile, add, cash, send, bill, bonus
+  // View states: home, history, profile, add, cash, send, bill, bonus
+  const [view, setView] = useState("home");
   
-  // Balance tap-to-reveal state
+  // Balance tap-to-reveal toggle
   const [showBalance, setShowBalance] = useState(false);
 
-  // Form input states
+  // Form inputs
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState("");
   const [targetAccount, setTargetAccount] = useState("");
@@ -36,9 +35,9 @@ export default function Dashboard() {
   const [biller, setBiller] = useState("DESCO Electricity");
   const [couponCode, setCouponCode] = useState("");
   
-  // Local transaction filters
+  // Filtering & search
   const [txSearch, setTxSearch] = useState("");
-  const [txTypeFilter, setTxTypeFilter] = useState("all"); // all, credit, debit
+  const [txTypeFilter, setTxTypeFilter] = useState("all");
 
   const [formErrors, setFormErrors] = useState({});
 
@@ -50,15 +49,14 @@ export default function Dashboard() {
 
   if (loading && !user) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-screen bg-gray-50">
-        <span className="loading loading-spinner loading-lg text-indigo-600"></span>
+      <div className="flex-1 flex items-center justify-center bg-transparent">
+        <span className="loading loading-spinner loading-md text-indigo-600"></span>
       </div>
     );
   }
 
   if (!user) return null;
 
-  // Clear inputs when closing sheets
   const resetForm = () => {
     setAmount("");
     setPin("");
@@ -68,7 +66,6 @@ export default function Dashboard() {
     setView("home");
   };
 
-  // Validate transaction forms
   const validateForm = (type) => {
     const errors = {};
     const val = parseFloat(amount);
@@ -77,13 +74,13 @@ export default function Dashboard() {
       if (!amount) {
         errors.amount = "Amount is required.";
       } else if (isNaN(val) || val <= 0) {
-        errors.amount = "Amount must be a positive number.";
+        errors.amount = "Must be a positive number.";
       }
 
       if (!pin) {
         errors.pin = "Security PIN is required.";
       } else if (!/^\d{4}$/.test(pin)) {
-        errors.pin = "PIN must be exactly 4 digits.";
+        errors.pin = "Must be exactly 4 digits.";
       }
     }
 
@@ -91,7 +88,7 @@ export default function Dashboard() {
       if (!targetAccount) {
         errors.account = "Agent number is required.";
       } else if (!/^01\d{9}$/.test(targetAccount)) {
-        errors.account = "Invalid Agent number. Must be 11 digits.";
+        errors.account = "Invalid 11-digit Agent number.";
       }
     }
 
@@ -99,9 +96,9 @@ export default function Dashboard() {
       if (!targetAccount) {
         errors.account = "Recipient number is required.";
       } else if (!/^01\d{9}$/.test(targetAccount)) {
-        errors.account = "Invalid Recipient number. Must be 11 digits.";
+        errors.account = "Invalid 11-digit number.";
       } else if (targetAccount === user.phone) {
-        errors.account = "You cannot transfer to your own number.";
+        errors.account = "Cannot transfer to yourself.";
       }
     }
 
@@ -117,7 +114,7 @@ export default function Dashboard() {
       }
     }
 
-    setFormErrors(errors);
+    setErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
@@ -142,7 +139,6 @@ export default function Dashboard() {
     }
   };
 
-  // Filter local transactions list
   const filteredTransactions = transactions.filter((tx) => {
     const matchesSearch =
       tx.title.toLowerCase().includes(txSearch.toLowerCase()) ||
@@ -155,149 +151,144 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-screen bg-base-200 overflow-hidden pb-20 relative select-none">
+    <div className="flex-1 flex flex-col min-h-0 bg-base-200 overflow-hidden pb-20 relative select-none">
+      
       {/* 1. Header Profile Banner */}
-      <header className="p-6 pt-10 flex justify-between items-center bg-base-100 rounded-b-[2.5rem] shadow-sm border-b border-base-200">
+      <header className="px-5.5 pt-7 pb-5 flex justify-between items-center bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 text-white rounded-b-[2.2rem] border-b border-white/10 shrink-0 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-lg shadow-inner">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-sm shadow-md">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-xs text-base-content/40 font-bold uppercase tracking-wider">Hello,</p>
-            <h3 className="font-extrabold text-base-content text-base leading-tight">{user.name}</h3>
+            <p className="text-[9px] text-indigo-200/50 font-black uppercase tracking-widest leading-none">Welcome back,</p>
+            <h3 className="font-extrabold text-white text-sm leading-tight mt-0.5">{user.name}</h3>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
             onClick={logout}
-            className="btn btn-circle btn-ghost text-base-content/40 hover:text-red-500 transition-all border border-base-300 cursor-pointer"
+            className="btn btn-circle btn-sm btn-ghost text-indigo-200/50 hover:text-red-400 hover:bg-white/5 border border-white/10 hover:border-white/20 transition-all cursor-pointer w-8 h-8 flex items-center justify-center"
             title="Sign Out"
           >
-            <i className="fa-solid fa-right-from-bracket"></i>
+            <i className="fa-solid fa-right-from-bracket text-[11px]"></i>
           </button>
         </div>
       </header>
 
       {/* Main View Scroll Area */}
-      <main className="px-6 py-6 overflow-y-auto flex-1 no-scrollbar pb-10">
-        {/* 2. Premium Tap-to-Reveal Balance Card */}
+      <main className="px-5.5 py-4 overflow-y-auto flex-1 no-scrollbar pb-6">
+        
+        {/* 2. Premium Metallic Credit Card Balance Card */}
         <div 
-          onClick={() => setShowBalance(!showBalance)}
-          className="w-full bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 p-6 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden mb-6 cursor-pointer transform active:scale-[0.99] transition-all"
+          className="w-full aspect-[1.58/1] rounded-[2.2rem] bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-6 shadow-xl shadow-slate-950/20 text-white relative overflow-hidden mb-6.5 border border-white/5"
         >
-          <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/5 rounded-full blur-xl"></div>
-          <div className="absolute -left-10 -bottom-10 w-36 h-36 bg-indigo-500/10 rounded-full blur-2xl"></div>
+          {/* Subtle glow highlight circles inside the card background */}
+          <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+          <div className="absolute left-0 bottom-0 w-24 h-24 bg-violet-500/10 rounded-full blur-2xl"></div>
           
           <div className="flex justify-between items-start z-10 relative">
             <div>
-              <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mb-1">
-                Moneta Wallet Balance
+              <p className="text-[8px] text-indigo-300/80 font-black uppercase tracking-widest mb-1.5">
+                Available Wallet Balance
               </p>
-              <h2 className="text-3xl font-black tracking-wider transition-all duration-300">
+              <h2 className="text-2.8xl font-black tracking-wider transition-all duration-300">
                 {showBalance ? `$${user.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "••••••••"}
               </h2>
             </div>
-            <div className="bg-white/10 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider flex items-center gap-1.5 border border-white/10">
-              <i className={`fa-solid ${showBalance ? "fa-eye-slash" : "fa-eye"}`}></i>
-              {showBalance ? "Hide" : "Reveal"}
-            </div>
+            
+            {/* Custom Embedded Microchip Graphic */}
+            <svg className="w-8 h-6 shrink-0 select-none" viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="30" height="22" rx="3.5" fill="#EAB308" stroke="#FEF08A" strokeWidth="1"/>
+              <path d="M16 1V23M1 12H31M8 6H24V18H8V6Z" stroke="#854D0E" strokeWidth="0.8"/>
+            </svg>
           </div>
           
-          <div className="mt-8 flex justify-between items-center text-xs text-indigo-200/70 font-semibold z-10 relative">
-            <span className="tracking-wide">Acct: {user.phone}</span>
-            <span className="uppercase tracking-widest text-[9px] bg-indigo-600/30 px-2 py-0.5 rounded border border-indigo-400/20">Active</span>
+          {/* Card Chip connection visuals */}
+          <div className="mt-6.5 flex justify-between items-end z-10 relative select-none">
+            <div>
+              <p className="text-[7.5px] text-indigo-200/40 font-bold uppercase tracking-widest leading-none">Account Number</p>
+              <p className="text-sm font-semibold tracking-widest mt-1 text-indigo-200">{user.phone}</p>
+            </div>
+            <div 
+              onClick={() => setShowBalance(!showBalance)}
+              className="bg-white/10 hover:bg-white/20 active:scale-95 px-2.5 py-1 rounded-full text-[9px] font-black tracking-widest flex flex-row items-center justify-center gap-1.5 border border-white/5 uppercase select-none whitespace-nowrap cursor-pointer transition-all duration-150"
+            >
+              <i className={`fa-solid ${showBalance ? "fa-eye-slash" : "fa-eye"} text-[10px] leading-none`}></i>
+              <span className="translate-y-[0.5px] leading-none">{showBalance ? "Hide" : "Show"}</span>
+            </div>
           </div>
         </div>
 
-        {/* 3. Grid Services Navigation */}
+        {/* 3. Grid Services (Home) */}
         {view === "home" && (
-          <>
-            <div className="mb-6">
-              <h4 className="font-extrabold text-base-content text-sm tracking-wider uppercase mb-3">Core Transactions</h4>
-              <div className="grid grid-cols-3 gap-4">
-                <button
-                  onClick={() => setView("add")}
-                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-circle-plus"></i></div>
-                  <span className="text-[10px] font-bold text-base-content/80">Add Money</span>
-                </button>
-                <button
-                  onClick={() => setView("cash")}
-                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-money-bill-transfer"></i></div>
-                  <span className="text-[10px] font-bold text-base-content/80">Cash Out</span>
-                </button>
-                <button
-                  onClick={() => setView("send")}
-                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-paper-plane"></i></div>
-                  <span className="text-[10px] font-bold text-base-content/80">Send Money</span>
-                </button>
-                <button
-                  onClick={() => setView("bill")}
-                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-receipt"></i></div>
-                  <span className="text-[10px] font-bold text-base-content/80">Pay Bill</span>
-                </button>
-                <button
-                  onClick={() => setView("bonus")}
-                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-gift"></i></div>
-                  <span className="text-[10px] font-bold text-base-content/80">Get Bonus</span>
-                </button>
-                <button
-                  onClick={() => setView("history")}
-                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
-                >
-                  <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-clock-rotate-left"></i></div>
-                  <span className="text-[10px] font-bold text-base-content/80">History</span>
-                </button>
+          <div className="animate-in fade-in duration-300">
+            <div className="mb-6.5">
+              <h4 className="text-[10px] font-black text-indigo-600 tracking-widest uppercase mb-3 pl-1">Wallet Services</h4>
+              
+              {/* Premium dark gradient capsules grid */}
+              <div className="grid grid-cols-3 gap-3.5">
+                {[
+                  { id: "add", label: "Add Money", icon: "fa-circle-plus", colorClass: "text-indigo-400 bg-white/5" },
+                  { id: "cash", label: "Cash Out", icon: "fa-arrow-up-from-bracket", colorClass: "text-emerald-400 bg-white/5" },
+                  { id: "send", label: "Send Money", icon: "fa-paper-plane", colorClass: "text-amber-400 bg-white/5" },
+                  { id: "bill", label: "Pay Bill", icon: "fa-file-invoice-dollar", colorClass: "text-cyan-400 bg-white/5" },
+                  { id: "bonus", label: "Promo Code", icon: "fa-gift", colorClass: "text-rose-400 bg-white/5" },
+                  { id: "history", label: "History", icon: "fa-clock-rotate-left", colorClass: "text-purple-400 bg-white/5" },
+                ].map((srv) => (
+                  <button
+                    key={srv.id}
+                    onClick={() => setView(srv.id)}
+                    className="flex flex-col items-center justify-center p-3.5 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 border border-white/5 rounded-[2.5rem] hover:brightness-110 active:scale-95 transition-all shadow-md shadow-black/10 cursor-pointer text-white"
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm mb-2.5 ${srv.colorClass}`}>
+                      <i className={`fa-solid ${srv.icon}`}></i>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-indigo-100/90 leading-none text-center">
+                      {srv.label}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* 4. Latest Payments section */}
             <div className="mb-4">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-extrabold text-base-content text-sm tracking-wider uppercase">Latest Transactions</h4>
+              <div className="flex justify-between items-center mb-3 pl-1">
+                <h4 className="text-[10px] font-black text-indigo-600 tracking-widest uppercase">Latest Activity</h4>
                 <button
                   onClick={() => setView("history")}
-                  className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
+                  className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:underline cursor-pointer"
                 >
                   View All
                 </button>
               </div>
 
               {transactions.length === 0 ? (
-                <div className="bg-base-100 p-6 text-center rounded-3xl border border-base-200 shadow-sm text-base-content/40 font-semibold text-xs">
-                  No transactions logged yet.
+                <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-6 text-center rounded-[2.2rem] border border-white/5 shadow-md text-indigo-200/50 font-bold text-xs">
+                  No transaction activity logged yet.
                 </div>
               ) : (
-                transactions.slice(0, 4).map((tx) => (
-                  <div key={tx._id} className="flex items-center justify-between p-4 bg-base-100 border border-base-200 rounded-3xl shadow-sm mb-3">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-base ${
-                        tx.type === "credit" ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+                transactions.slice(0, 3).map((tx) => (
+                  <div key={tx._id} className="flex items-center justify-between p-3.5 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 border border-white/5 rounded-2.5xl shadow-md mb-2.5 text-white">
+                    <div className="flex items-center gap-3.5">
+                      <div className={`w-9.5 h-9.5 rounded-1.5rem flex items-center justify-center text-xs bg-white/5 ${
+                        tx.type === "credit" ? "text-emerald-400" : "text-rose-400"
                       }`}>
                         <i className={`fa-solid ${
                           tx.category === "add" ? "fa-circle-plus" :
-                          tx.category === "cashout" ? "fa-money-bill-transfer" :
+                          tx.category === "cashout" ? "fa-arrow-up-from-bracket" :
                           tx.category === "transfer" ? "fa-paper-plane" :
-                          tx.category === "bill" ? "fa-receipt" : "fa-gift"
+                          tx.category === "bill" ? "fa-file-invoice-dollar" : "fa-gift"
                         }`}></i>
                       </div>
                       <div>
-                        <p className="font-bold text-base-content text-sm leading-snug">{tx.title}</p>
-                        <p className="text-[10px] text-base-content/40 font-bold">{new Date(tx.createdAt).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="font-extrabold text-white text-xs leading-none">{tx.title}</p>
+                        <p className="text-[9px] text-indigo-200/40 font-bold mt-1.5">{new Date(tx.createdAt).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </div>
-                    <span className={`font-black text-sm ${
-                      tx.type === "credit" ? "text-emerald-500" : "text-base-content"
+                    <span className={`font-black text-xs ${
+                      tx.type === "credit" ? "text-emerald-400" : "text-white"
                     }`}>
                       {tx.type === "credit" ? `+$${tx.amount}` : `-$${tx.amount}`}
                     </span>
@@ -305,35 +296,37 @@ export default function Dashboard() {
                 ))
               )}
             </div>
-          </>
+          </div>
         )}
 
-        {/* 5. Transactions History Full Ledger View */}
+        {/* 5. Transactions History Full Ledger */}
         {view === "history" && (
           <div className="animate-in fade-in duration-300">
-            <h3 className="text-xl font-extrabold text-base-content mb-4 font-heading">Transaction Ledger</h3>
+            <h3 className="text-lg font-black text-indigo-600 mb-4 tracking-tight pl-1">Activity Ledger</h3>
 
             {/* Local Search and Filtering */}
             <div className="mb-5 flex flex-col gap-3">
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search titles or account IDs..."
+                  placeholder="Search activity records..."
                   value={txSearch}
                   onChange={(e) => setTxSearch(e.target.value)}
-                  className="input w-full rounded-2xl bg-base-100 border border-base-300 h-11 pl-10 pr-4 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none placeholder:text-gray-400 font-medium text-base-content"
+                  className="input w-full rounded-2xl bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 border border-white/10 h-10.5 pl-9 pr-4 text-xs focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 outline-none placeholder:text-indigo-200/30 font-semibold text-white"
                 />
-                <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-200/40 text-xs"></i>
               </div>
 
               {/* Segmented Filter Control */}
-              <div className="grid grid-cols-3 bg-base-200/50 p-1.5 rounded-2xl">
+              <div className="grid grid-cols-3 bg-[#0a0c12] p-1 rounded-2xl border border-white/5">
                 {["all", "credit", "debit"].map((type) => (
                   <button
                     key={type}
                     onClick={() => setTxTypeFilter(type)}
-                    className={`py-1.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer uppercase ${
-                      txTypeFilter === type ? "bg-base-100 text-indigo-500 shadow-sm" : "text-gray-400 hover:text-base-content"
+                    className={`py-1.5 text-[9px] font-black rounded-xl transition-all cursor-pointer uppercase tracking-wider ${
+                      txTypeFilter === type 
+                        ? "bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 text-indigo-600 border border-white/10 shadow-md" 
+                        : "text-slate-600 dark:text-white/40 hover:text-black dark:hover:text-white font-extrabold"
                     }`}
                   >
                     {type}
@@ -343,37 +336,37 @@ export default function Dashboard() {
             </div>
 
             {filteredTransactions.length === 0 ? (
-              <div className="bg-base-100 p-10 text-center rounded-[2.5rem] border border-base-200 shadow-sm text-base-content/40 font-semibold text-sm">
+              <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-10 text-center rounded-[2.5rem] border border-white/5 shadow-md text-indigo-200/50 font-bold text-xs">
                 No matching transactions found.
               </div>
             ) : (
               filteredTransactions.map((tx) => (
-                <div key={tx._id} className="flex items-center justify-between p-4 bg-base-100 border border-base-200 rounded-3xl shadow-sm mb-3">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-base ${
-                      tx.type === "credit" ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
+                <div key={tx._id} className="flex items-center justify-between p-3.5 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 border border-white/5 rounded-[2.5rem] shadow-md mb-2.5 text-white">
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-9.5 h-9.5 rounded-1.5rem flex items-center justify-center text-xs ${
+                      tx.type === "credit" ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"
                     }`}>
                       <i className={`fa-solid ${
                         tx.category === "add" ? "fa-circle-plus" :
-                        tx.category === "cashout" ? "fa-money-bill-transfer" :
+                        tx.category === "cashout" ? "fa-arrow-up-from-bracket" :
                         tx.category === "transfer" ? "fa-paper-plane" :
-                        tx.category === "bill" ? "fa-receipt" : "fa-gift"
+                        tx.category === "bill" ? "fa-file-invoice-dollar" : "fa-gift"
                       }`}></i>
                     </div>
                     <div>
-                      <p className="font-bold text-base-content text-sm leading-snug">{tx.title}</p>
-                      <p className="text-[10px] text-base-content/40 font-bold">
+                      <p className="font-extrabold text-white text-xs leading-none">{tx.title}</p>
+                      <p className="text-[9px] text-indigo-200/40 font-bold mt-1.5">
                         {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                       {tx.counterParty && (
-                        <p className="text-[9px] text-indigo-500/80 font-extrabold uppercase tracking-wide mt-0.5">
+                        <p className="text-[8px] text-indigo-400/80 font-black uppercase tracking-widest mt-1.5 leading-none">
                           ID: {tx.counterParty}
                         </p>
                       )}
                     </div>
                   </div>
-                  <span className={`font-black text-sm ${
-                    tx.type === "credit" ? "text-emerald-500" : "text-base-content"
+                  <span className={`font-black text-xs ${
+                    tx.type === "credit" ? "text-emerald-400" : "text-white"
                   }`}>
                     {tx.type === "credit" ? `+$${tx.amount}` : `-$${tx.amount}`}
                   </span>
@@ -385,21 +378,21 @@ export default function Dashboard() {
 
         {/* 6. Profile View */}
         {view === "profile" && (
-          <div className="animate-in fade-in duration-300 bg-base-100 p-8 rounded-[2.5rem] shadow-sm border border-base-200 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-3xl shadow-md mx-auto mb-4">
+          <div className="animate-in fade-in duration-300 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-7.5 rounded-[2.2rem] shadow-md border border-white/5 text-center text-white">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-2xl shadow-md mx-auto mb-3.5">
               {user.name.charAt(0).toUpperCase()}
             </div>
-            <h3 className="text-xl font-extrabold text-base-content">{user.name}</h3>
-            <p className="text-xs text-base-content/40 font-bold uppercase tracking-widest mt-1">Wallet Member</p>
+            <h3 className="text-base font-extrabold text-white leading-none">{user.name}</h3>
+            <p className="text-[8px] text-indigo-200/50 font-black uppercase tracking-widest mt-1.5">Registered Member</p>
 
-            <div className="mt-8 border-t border-base-200 pt-6 text-left flex flex-col gap-4">
+            <div className="mt-6 border-t border-white/5 pt-5 text-left flex flex-col gap-3.5">
               <div>
-                <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider">Associated Phone</p>
-                <p className="text-sm text-base-content font-bold mt-0.5">{user.phone}</p>
+                <p className="text-[8px] text-indigo-200/40 font-black uppercase tracking-widest">Mobile Account</p>
+                <p className="text-xs text-white font-semibold mt-1">{user.phone}</p>
               </div>
               <div>
-                <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider">Account ID</p>
-                <p className="text-xs text-base-content/50 font-mono mt-0.5">{user.id}</p>
+                <p className="text-[8px] text-indigo-200/40 font-black uppercase tracking-widest">Unique ID</p>
+                <p className="text-[10px] text-indigo-200/50 font-mono mt-1 break-all select-all">{user.id}</p>
               </div>
             </div>
           </div>
@@ -408,7 +401,7 @@ export default function Dashboard() {
 
       {/* 7. Slide-Up Drawer Sheet Panel */}
       <div
-        className={`absolute inset-0 bg-black/40 z-50 transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-50 transition-opacity duration-300 ${
           ["add", "cash", "send", "bill", "bonus"].includes(view)
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
@@ -417,44 +410,44 @@ export default function Dashboard() {
       >
         {/* Sliding Panel Sheet */}
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-base-100 rounded-t-[2.5rem] shadow-2xl p-8 pt-6 transition-transform duration-300 transform z-50 flex flex-col max-h-[85%] ${
+          className={`absolute bottom-0 left-0 right-0 bg-[#0C0D14]/98 backdrop-blur-2xl rounded-t-[2.2rem] shadow-2xl p-7 pt-5 transition-transform duration-300 transform z-50 flex flex-col max-h-[80%] border-t border-white/[0.08] ${
             ["add", "cash", "send", "bill", "bonus"].includes(view)
               ? "translate-y-0"
               : "translate-y-full"
           }`}
-          onClick={(e) => e.stopPropagation()} // Prevent closing when tapping inside the sheet
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Drawer Drag handle visual */}
-          <div className="w-12 h-1.5 bg-base-300 rounded-full mx-auto mb-6"></div>
+          {/* Drawer Drag bar visual */}
+          <div className="w-11 h-1 bg-white/10 rounded-full mx-auto mb-5 shrink-0"></div>
 
           {/* Drawer Header with back control */}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-5 shrink-0 select-none">
             <button
               onClick={resetForm}
-              className="btn btn-circle btn-sm btn-ghost text-base-content/55 hover:text-indigo-600 transition-all border border-base-200 cursor-pointer"
+              className="btn btn-circle btn-sm btn-ghost text-indigo-200/55 hover:bg-white/5 transition-all border border-white/10 cursor-pointer"
             >
-              <i className="fa-solid fa-arrow-left"></i>
+              <i className="fa-solid fa-arrow-left text-[11px]"></i>
             </button>
-            <h3 className="font-extrabold text-base-content text-lg uppercase tracking-wider font-heading">
-              {view === "add" ? "Add Money" :
-               view === "cash" ? "Cash Out" :
-               view === "send" ? "Send Money" :
-               view === "bill" ? "Pay Bill" : "Claim Promo"}
+            <h3 className="font-black text-indigo-50 text-sm uppercase tracking-wider font-heading">
+              {view === "add" ? "Deposit Money" :
+               view === "cash" ? "Withdrawal" :
+               view === "send" ? "Transfer Out" :
+               view === "bill" ? "Pay Utilities" : "Enter Coupon"}
             </h3>
-            <div className="w-8"></div> {/* Spacer balance placeholder */}
+            <div className="w-8"></div>
           </div>
 
-          <div className="overflow-y-auto no-scrollbar flex-1 pb-6">
-            {/* Conditional input fields */}
+          <div className="overflow-y-auto no-scrollbar flex-1 pb-4">
+            {/* Conditional inputs */}
             {view === "add" && (
-              <div className="form-control mb-5">
-                <label className="label pb-1.5">
-                  <span className="label-text font-bold text-base-content/80 text-sm tracking-wide">Deposit Source</span>
+              <div className="form-control mb-4">
+                <label className="label pb-1 select-none">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200/40 pl-1">Deposit Source</span>
                 </label>
                 <select
                   value={source}
                   onChange={(e) => setSource(e.target.value)}
-                  className="select select-bordered w-full rounded-2xl bg-base-200 border border-base-300 h-13 px-4 font-semibold text-base-content focus:outline-none focus:border-indigo-500"
+                  className="select select-bordered w-full rounded-2xl bg-[#131622] border border-white/[0.08] h-12 px-4.5 font-bold text-xs text-white focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
                 >
                   <option value="Visa Card">Visa Debit Card (*4221)</option>
                   <option value="Mastercard">Mastercard Gold (*8890)</option>
@@ -465,14 +458,14 @@ export default function Dashboard() {
             )}
 
             {view === "bill" && (
-              <div className="form-control mb-5">
-                <label className="label pb-1.5">
-                  <span className="label-text font-bold text-base-content/80 text-sm tracking-wide">Utility Provider</span>
+              <div className="form-control mb-4">
+                <label className="label pb-1 select-none">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200/40 pl-1">Utility Provider</span>
                 </label>
                 <select
                   value={biller}
                   onChange={(e) => setBiller(e.target.value)}
-                  className="select select-bordered w-full rounded-2xl bg-base-200 border border-base-300 h-13 px-4 font-semibold text-base-content focus:outline-none focus:border-indigo-500"
+                  className="select select-bordered w-full rounded-2xl bg-[#131622] border border-white/[0.08] h-12 px-4.5 font-bold text-xs text-white focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
                 >
                   <option value="DESCO Electricity">DESCO Electricity</option>
                   <option value="Dhaka WASA Water">Dhaka WASA Water</option>
@@ -487,8 +480,8 @@ export default function Dashboard() {
                 {view !== "add" && (
                   <InputGroup
                     label={
-                      view === "cash" ? "Agent Phone Number" :
-                      view === "send" ? "Recipient Phone Number" : "Subscriber Account ID"
+                      view === "cash" ? "Agent Phone" :
+                      view === "send" ? "Recipient Phone" : "Subscriber Account ID"
                     }
                     type="text"
                     placeholder={view === "bill" ? "e.g. 100988776" : "01XXXXXXXXX"}
@@ -497,6 +490,7 @@ export default function Dashboard() {
                     max={view !== "bill" ? "11" : undefined}
                     iconClass={view !== "bill" ? "fa-solid fa-phone" : "fa-solid fa-hashtag"}
                     error={formErrors.account}
+                    variant="dark"
                   />
                 )}
 
@@ -508,6 +502,7 @@ export default function Dashboard() {
                   onChange={(e) => setAmount(e.target.value)}
                   iconClass="fa-solid fa-dollar-sign"
                   error={formErrors.amount}
+                  variant="dark"
                 />
 
                 <InputGroup
@@ -519,6 +514,7 @@ export default function Dashboard() {
                   max="4"
                   iconClass="fa-solid fa-key"
                   error={formErrors.pin}
+                  variant="dark"
                 />
               </>
             )}
@@ -532,10 +528,11 @@ export default function Dashboard() {
                 onChange={(e) => setCouponCode(e.target.value)}
                 iconClass="fa-solid fa-gift"
                 error={formErrors.coupon}
+                variant="dark"
               />
             )}
 
-            <div className="mt-4">
+            <div className="mt-6.5">
               <ActionButton 
                 onClick={() => handleWalletAction(view)}
                 loading={loading}

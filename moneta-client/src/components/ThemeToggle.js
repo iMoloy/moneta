@@ -20,10 +20,10 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="btn btn-circle btn-ghost text-base-content/60 hover:text-indigo-600 transition-all cursor-pointer border border-base-300"
+      className="btn btn-circle btn-sm btn-ghost text-indigo-200/50 hover:text-white hover:bg-white/5 border border-white/10 hover:border-white/20 transition-all cursor-pointer w-8 h-8 flex items-center justify-center"
       title="Toggle Light/Dark Theme"
     >
-      <i className={`fa-solid ${theme === "light" ? "fa-moon" : "fa-sun"} text-lg`}></i>
+      <i className={`fa-solid ${theme === "light" ? "fa-moon" : "fa-sun"} text-[11px]`}></i>
     </button>
   );
 }

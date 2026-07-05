@@ -17,7 +17,7 @@ export default function Login() {
     if (!cleanPhone) {
       tempErrors.phone = "Phone number is required.";
     } else if (!/^01\d{9}$/.test(cleanPhone)) {
-      tempErrors.phone = "Invalid format. Must be 11 digits (e.g. 01XXXXXXXXX).";
+      tempErrors.phone = "Must be 11 digits (starts with 01).";
     }
 
     if (!password) {
@@ -36,27 +36,35 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center px-6 py-12 bg-base-200 min-h-screen">
-      {/* Brand Logo Container */}
-      <div className="flex flex-col items-center mb-10 text-center select-none">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 shadow-md flex items-center justify-center mb-4">
-          <i className="fa-solid fa-wallet text-white text-3xl"></i>
+    <div className="flex-1 flex flex-col justify-between px-6.5 py-10 relative overflow-y-auto no-scrollbar">
+      {/* Soft Ambient Background Glow */}
+      <div className="absolute top-0 left-0 right-0 h-60 bg-gradient-to-b from-indigo-500/10 via-violet-500/3 to-transparent blur-3xl pointer-events-none"></div>
+
+      {/* Brand Header */}
+      <div className="flex flex-col items-center mt-12 text-center select-none shrink-0 z-10">
+        <div className="w-15 h-15 rounded-[1.4rem] bg-gradient-to-tr from-indigo-600 via-indigo-600 to-violet-600 shadow-xl shadow-indigo-500/20 flex items-center justify-center mb-5">
+          <i className="fa-solid fa-wallet text-white text-2.5xl"></i>
         </div>
-        <h1 className="text-3xl font-black text-base-content tracking-wider">
-          M O N E T A
+        <h1 className="text-3.5xl font-black text-base-content tracking-widest font-heading">
+          MONETA
         </h1>
-        <p className="text-xs text-base-content/40 font-bold uppercase tracking-widest mt-1">
-          Secure Mobile MFS
+        <p className="text-[10px] text-base-content/40 font-black uppercase tracking-widest mt-1">
+          Next-Gen Mobile Wallet
         </p>
       </div>
 
-      {/* Login Card */}
-      <div className="w-full bg-base-100 p-8 rounded-[2rem] shadow-xl border border-base-200">
-        <h2 className="text-xl font-bold text-base-content mb-6 text-center">
-          Access Your Wallet
-        </h2>
-        
-        <form onSubmit={handleSubmit}>
+      {/* Float Forms (No nested card border - mimics native iOS/Android screens) */}
+      <div className="flex-1 flex flex-col justify-center my-8 z-10">
+        <div className="mb-6.5 text-center">
+          <h2 className="text-xl font-black text-base-content tracking-tight">
+            Sign In to Wallet
+          </h2>
+          <p className="text-xs text-base-content/50 font-bold mt-1">
+            Access your secure MFS account
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="w-full">
           <InputGroup
             label="Mobile Number"
             type="text"
@@ -77,19 +85,19 @@ export default function Login() {
             error={errors.password}
           />
           
-          <div className="mt-6">
+          <div className="mt-8">
             <ActionButton loading={loading}>Sign In</ActionButton>
           </div>
         </form>
       </div>
 
-      {/* Redirect footer */}
-      <div className="mt-8 text-center">
-        <p className="text-sm text-base-content/70 font-medium">
+      {/* Redirect Footer Link */}
+      <div className="text-center shrink-0 z-10 mt-auto">
+        <p className="text-xs text-base-content/50 font-bold">
           New to Moneta?{" "}
           <Link
             href="/register"
-            className="text-indigo-600 font-bold hover:underline transition-all"
+            className="text-indigo-600 hover:text-indigo-500 font-extrabold hover:underline ml-1 transition-all"
           >
             Create an Account
           </Link>

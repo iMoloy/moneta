@@ -8,7 +8,7 @@ export default function BottomNav({ activeView, setView }) {
   ];
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-20 bg-base-100 border-t border-base-200 flex items-center justify-around px-6 z-40">
+    <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 rounded-t-[2.2rem] border-t border-white/10 flex items-center justify-around px-6 z-40 shadow-lg shadow-slate-950/20">
       {navItems.map((item) => {
         const isActive = activeView === item.id || (item.id === "home" && !["history", "profile"].includes(activeView));
         return (
@@ -21,14 +21,14 @@ export default function BottomNav({ activeView, setView }) {
               className={`text-xl mb-1 transition-all duration-200 ${
                 isActive
                   ? "text-indigo-600 scale-110"
-                  : "text-gray-400 hover:text-gray-600"
+                  : "text-white/40 hover:text-white/60"
               }`}
             >
               <i className={`fa-solid ${item.icon}`}></i>
             </div>
             <span
               className={`text-[10px] font-bold tracking-wider ${
-                isActive ? "text-indigo-600" : "text-gray-400"
+                isActive ? "text-indigo-600" : "text-white/40"
               }`}
             >
               {item.label}
