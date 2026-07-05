@@ -54,23 +54,23 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center px-6 py-12 bg-gray-50 min-h-screen">
+    <div className="flex flex-col flex-1 items-center justify-center px-6 py-12 bg-base-200 min-h-screen">
       {/* Brand Logo Container */}
       <div className="flex flex-col items-center mb-10 text-center select-none">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 shadow-md flex items-center justify-center mb-4">
           <i className="fa-solid fa-wallet text-white text-3xl"></i>
         </div>
-        <h1 className="text-3xl font-black text-gray-800 tracking-wider">
+        <h1 className="text-3xl font-black text-base-content tracking-wider">
           M O N E T A
         </h1>
-        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">
+        <p className="text-xs text-base-content/40 font-bold uppercase tracking-widest mt-1">
           Secure Mobile MFS
         </p>
       </div>
 
       {/* Registration Card */}
-      <div className="w-full bg-white p-8 rounded-[2rem] shadow-xl border border-gray-100/50">
-        <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">
+      <div className="w-full bg-base-100 p-8 rounded-[2rem] shadow-xl border border-base-200">
+        <h2 className="text-xl font-bold text-base-content mb-6 text-center">
           Create Your Account
         </h2>
         
@@ -122,7 +122,7 @@ export default function Register() {
 
       {/* Redirect footer */}
       <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500 font-medium">
+        <p className="text-sm text-base-content/70 font-medium">
           Already have an account?{" "}
           <Link
             href="/"

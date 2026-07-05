@@ -20,8 +20,8 @@ export default function RootLayout({ children }) {
           referrerPolicy="no-referrer"
         />
       </head>
-      <body className="min-h-screen flex justify-center bg-[#F4F5F7]">
-        <div className="w-full max-w-md bg-white shadow-2xl min-h-screen relative flex flex-col">
+      <body className="min-h-screen flex justify-center bg-base-300">
+        <div className="w-full max-w-md bg-base-100 text-base-content shadow-2xl min-h-screen relative flex flex-col">
           <BankProvider>
             {children}
             <ToastContainer position="top-center" autoClose={2000} />

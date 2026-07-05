@@ -155,23 +155,23 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-screen bg-[#F4F5F7] overflow-hidden pb-20 relative select-none">
+    <div className="flex flex-col flex-1 h-full min-h-screen bg-base-200 overflow-hidden pb-20 relative select-none">
       {/* 1. Header Profile Banner */}
-      <header className="p-6 pt-10 flex justify-between items-center bg-white rounded-b-[2.5rem] shadow-sm border-b border-gray-100">
+      <header className="p-6 pt-10 flex justify-between items-center bg-base-100 rounded-b-[2.5rem] shadow-sm border-b border-base-200">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-lg shadow-inner">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Hello,</p>
-            <h3 className="font-extrabold text-gray-800 text-base leading-tight">{user.name}</h3>
+            <p className="text-xs text-base-content/40 font-bold uppercase tracking-wider">Hello,</p>
+            <h3 className="font-extrabold text-base-content text-base leading-tight">{user.name}</h3>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
             onClick={logout}
-            className="btn btn-circle btn-ghost text-gray-400 hover:text-red-500 transition-all border border-gray-200 cursor-pointer"
+            className="btn btn-circle btn-ghost text-base-content/40 hover:text-red-500 transition-all border border-base-300 cursor-pointer"
             title="Sign Out"
           >
             <i className="fa-solid fa-right-from-bracket"></i>
@@ -214,49 +214,49 @@ export default function Dashboard() {
         {view === "home" && (
           <>
             <div className="mb-6">
-              <h4 className="font-extrabold text-gray-800 text-sm tracking-wider uppercase mb-3">Core Transactions</h4>
+              <h4 className="font-extrabold text-base-content text-sm tracking-wider uppercase mb-3">Core Transactions</h4>
               <div className="grid grid-cols-3 gap-4">
                 <button
                   onClick={() => setView("add")}
-                  className="flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-circle-plus"></i></div>
-                  <span className="text-[10px] font-bold text-gray-600">Add Money</span>
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-circle-plus"></i></div>
+                  <span className="text-[10px] font-bold text-base-content/80">Add Money</span>
                 </button>
                 <button
                   onClick={() => setView("cash")}
-                  className="flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-money-bill-transfer"></i></div>
-                  <span className="text-[10px] font-bold text-gray-600">Cash Out</span>
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-money-bill-transfer"></i></div>
+                  <span className="text-[10px] font-bold text-base-content/80">Cash Out</span>
                 </button>
                 <button
                   onClick={() => setView("send")}
-                  className="flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-paper-plane"></i></div>
-                  <span className="text-[10px] font-bold text-gray-600">Send Money</span>
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-paper-plane"></i></div>
+                  <span className="text-[10px] font-bold text-base-content/80">Send Money</span>
                 </button>
                 <button
                   onClick={() => setView("bill")}
-                  className="flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-receipt"></i></div>
-                  <span className="text-[10px] font-bold text-gray-600">Pay Bill</span>
+                  <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-receipt"></i></div>
+                  <span className="text-[10px] font-bold text-base-content/80">Pay Bill</span>
                 </button>
                 <button
                   onClick={() => setView("bonus")}
-                  className="flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-gift"></i></div>
-                  <span className="text-[10px] font-bold text-gray-600">Get Bonus</span>
+                  <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-gift"></i></div>
+                  <span className="text-[10px] font-bold text-base-content/80">Get Bonus</span>
                 </button>
                 <button
                   onClick={() => setView("history")}
-                  className="flex flex-col items-center justify-center p-4 bg-white border border-gray-100 rounded-3xl hover:bg-gray-50 active:scale-95 transition-all shadow-sm cursor-pointer"
+                  className="flex flex-col items-center justify-center p-4 bg-base-100 border border-base-200 rounded-3xl hover:bg-base-200/50 active:scale-95 transition-all shadow-sm cursor-pointer"
                 >
-                  <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-clock-rotate-left"></i></div>
-                  <span className="text-[10px] font-bold text-gray-600">History</span>
+                  <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-lg mb-2"><i className="fa-solid fa-clock-rotate-left"></i></div>
+                  <span className="text-[10px] font-bold text-base-content/80">History</span>
                 </button>
               </div>
             </div>
@@ -264,7 +264,7 @@ export default function Dashboard() {
             {/* 4. Latest Payments section */}
             <div className="mb-4">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="font-extrabold text-gray-800 text-sm tracking-wider uppercase">Latest Transactions</h4>
+                <h4 className="font-extrabold text-base-content text-sm tracking-wider uppercase">Latest Transactions</h4>
                 <button
                   onClick={() => setView("history")}
                   className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer"
@@ -274,15 +274,15 @@ export default function Dashboard() {
               </div>
 
               {transactions.length === 0 ? (
-                <div className="bg-white p-6 text-center rounded-3xl border border-gray-100 shadow-sm text-gray-400 font-semibold text-xs">
+                <div className="bg-base-100 p-6 text-center rounded-3xl border border-base-200 shadow-sm text-base-content/40 font-semibold text-xs">
                   No transactions logged yet.
                 </div>
               ) : (
                 transactions.slice(0, 4).map((tx) => (
-                  <div key={tx._id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-3xl shadow-sm mb-3">
+                  <div key={tx._id} className="flex items-center justify-between p-4 bg-base-100 border border-base-200 rounded-3xl shadow-sm mb-3">
                     <div className="flex items-center gap-4">
                       <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-base ${
-                        tx.type === "credit" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                        tx.type === "credit" ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
                       }`}>
                         <i className={`fa-solid ${
                           tx.category === "add" ? "fa-circle-plus" :
@@ -292,12 +292,12 @@ export default function Dashboard() {
                         }`}></i>
                       </div>
                       <div>
-                        <p className="font-bold text-gray-800 text-sm leading-snug">{tx.title}</p>
-                        <p className="text-[10px] text-gray-400 font-bold">{new Date(tx.createdAt).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="font-bold text-base-content text-sm leading-snug">{tx.title}</p>
+                        <p className="text-[10px] text-base-content/40 font-bold">{new Date(tx.createdAt).toLocaleDateString([], { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </div>
                     <span className={`font-black text-sm ${
-                      tx.type === "credit" ? "text-emerald-500" : "text-gray-800"
+                      tx.type === "credit" ? "text-emerald-500" : "text-base-content"
                     }`}>
                       {tx.type === "credit" ? `+$${tx.amount}` : `-$${tx.amount}`}
                     </span>
@@ -311,7 +311,7 @@ export default function Dashboard() {
         {/* 5. Transactions History Full Ledger View */}
         {view === "history" && (
           <div className="animate-in fade-in duration-300">
-            <h3 className="text-xl font-extrabold text-gray-800 mb-4 font-heading">Transaction Ledger</h3>
+            <h3 className="text-xl font-extrabold text-base-content mb-4 font-heading">Transaction Ledger</h3>
 
             {/* Local Search and Filtering */}
             <div className="mb-5 flex flex-col gap-3">
@@ -321,19 +321,19 @@ export default function Dashboard() {
                   placeholder="Search titles or account IDs..."
                   value={txSearch}
                   onChange={(e) => setTxSearch(e.target.value)}
-                  className="input w-full rounded-2xl bg-white border border-gray-200 h-11 pl-10 pr-4 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 outline-none placeholder:text-gray-400 font-medium text-gray-800"
+                  className="input w-full rounded-2xl bg-base-100 border border-base-300 h-11 pl-10 pr-4 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 outline-none placeholder:text-gray-400 font-medium text-base-content"
                 />
                 <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
               </div>
 
               {/* Segmented Filter Control */}
-              <div className="grid grid-cols-3 bg-gray-200/50 p-1.5 rounded-2xl">
+              <div className="grid grid-cols-3 bg-base-200/50 p-1.5 rounded-2xl">
                 {["all", "credit", "debit"].map((type) => (
                   <button
                     key={type}
                     onClick={() => setTxTypeFilter(type)}
                     className={`py-1.5 text-xs font-extrabold rounded-xl transition-all cursor-pointer uppercase ${
-                      txTypeFilter === type ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                      txTypeFilter === type ? "bg-base-100 text-indigo-500 shadow-sm" : "text-gray-400 hover:text-base-content"
                     }`}
                   >
                     {type}
@@ -343,15 +343,15 @@ export default function Dashboard() {
             </div>
 
             {filteredTransactions.length === 0 ? (
-              <div className="bg-white p-10 text-center rounded-[2.5rem] border border-gray-100 shadow-sm text-gray-400 font-semibold text-sm">
+              <div className="bg-base-100 p-10 text-center rounded-[2.5rem] border border-base-200 shadow-sm text-base-content/40 font-semibold text-sm">
                 No matching transactions found.
               </div>
             ) : (
               filteredTransactions.map((tx) => (
-                <div key={tx._id} className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-3xl shadow-sm mb-3">
+                <div key={tx._id} className="flex items-center justify-between p-4 bg-base-100 border border-base-200 rounded-3xl shadow-sm mb-3">
                   <div className="flex items-center gap-4">
                     <div className={`w-11 h-11 rounded-2xl flex items-center justify-center text-base ${
-                      tx.type === "credit" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                      tx.type === "credit" ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"
                     }`}>
                       <i className={`fa-solid ${
                         tx.category === "add" ? "fa-circle-plus" :
@@ -361,8 +361,8 @@ export default function Dashboard() {
                       }`}></i>
                     </div>
                     <div>
-                      <p className="font-bold text-gray-800 text-sm leading-snug">{tx.title}</p>
-                      <p className="text-[10px] text-gray-400 font-bold">
+                      <p className="font-bold text-base-content text-sm leading-snug">{tx.title}</p>
+                      <p className="text-[10px] text-base-content/40 font-bold">
                         {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                       {tx.counterParty && (
@@ -373,7 +373,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <span className={`font-black text-sm ${
-                    tx.type === "credit" ? "text-emerald-500" : "text-gray-800"
+                    tx.type === "credit" ? "text-emerald-500" : "text-base-content"
                   }`}>
                     {tx.type === "credit" ? `+$${tx.amount}` : `-$${tx.amount}`}
                   </span>
@@ -385,21 +385,21 @@ export default function Dashboard() {
 
         {/* 6. Profile View */}
         {view === "profile" && (
-          <div className="animate-in fade-in duration-300 bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 text-center">
+          <div className="animate-in fade-in duration-300 bg-base-100 p-8 rounded-[2.5rem] shadow-sm border border-base-200 text-center">
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-3xl shadow-md mx-auto mb-4">
               {user.name.charAt(0).toUpperCase()}
             </div>
-            <h3 className="text-xl font-extrabold text-gray-800">{user.name}</h3>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Wallet Member</p>
+            <h3 className="text-xl font-extrabold text-base-content">{user.name}</h3>
+            <p className="text-xs text-base-content/40 font-bold uppercase tracking-widest mt-1">Wallet Member</p>
 
-            <div className="mt-8 border-t border-gray-100 pt-6 text-left flex flex-col gap-4">
+            <div className="mt-8 border-t border-base-200 pt-6 text-left flex flex-col gap-4">
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Associated Phone</p>
-                <p className="text-sm text-gray-800 font-bold mt-0.5">{user.phone}</p>
+                <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider">Associated Phone</p>
+                <p className="text-sm text-base-content font-bold mt-0.5">{user.phone}</p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Account ID</p>
-                <p className="text-xs text-gray-500 font-mono mt-0.5">{user.id}</p>
+                <p className="text-[10px] text-base-content/40 font-bold uppercase tracking-wider">Account ID</p>
+                <p className="text-xs text-base-content/50 font-mono mt-0.5">{user.id}</p>
               </div>
             </div>
           </div>
@@ -417,7 +417,7 @@ export default function Dashboard() {
       >
         {/* Sliding Panel Sheet */}
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-[2.5rem] shadow-2xl p-8 pt-6 transition-transform duration-300 transform z-50 flex flex-col max-h-[85%] ${
+          className={`absolute bottom-0 left-0 right-0 bg-base-100 rounded-t-[2.5rem] shadow-2xl p-8 pt-6 transition-transform duration-300 transform z-50 flex flex-col max-h-[85%] ${
             ["add", "cash", "send", "bill", "bonus"].includes(view)
               ? "translate-y-0"
               : "translate-y-full"
@@ -425,17 +425,17 @@ export default function Dashboard() {
           onClick={(e) => e.stopPropagation()} // Prevent closing when tapping inside the sheet
         >
           {/* Drawer Drag handle visual */}
-          <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+          <div className="w-12 h-1.5 bg-base-300 rounded-full mx-auto mb-6"></div>
 
           {/* Drawer Header with back control */}
           <div className="flex justify-between items-center mb-6">
             <button
               onClick={resetForm}
-              className="btn btn-circle btn-sm btn-ghost text-gray-500 hover:text-indigo-600 transition-all border border-gray-100 cursor-pointer"
+              className="btn btn-circle btn-sm btn-ghost text-base-content/55 hover:text-indigo-600 transition-all border border-base-200 cursor-pointer"
             >
               <i className="fa-solid fa-arrow-left"></i>
             </button>
-            <h3 className="font-extrabold text-gray-800 text-lg uppercase tracking-wider font-heading">
+            <h3 className="font-extrabold text-base-content text-lg uppercase tracking-wider font-heading">
               {view === "add" ? "Add Money" :
                view === "cash" ? "Cash Out" :
                view === "send" ? "Send Money" :
@@ -449,12 +449,12 @@ export default function Dashboard() {
             {view === "add" && (
               <div className="form-control mb-5">
                 <label className="label pb-1.5">
-                  <span className="label-text font-bold text-gray-700 text-sm tracking-wide">Deposit Source</span>
+                  <span className="label-text font-bold text-base-content/80 text-sm tracking-wide">Deposit Source</span>
                 </label>
                 <select
                   value={source}
                   onChange={(e) => setSource(e.target.value)}
-                  className="select select-bordered w-full rounded-2xl bg-gray-50 border border-gray-200 h-13 px-4 font-semibold text-gray-800 focus:outline-none focus:border-indigo-500"
+                  className="select select-bordered w-full rounded-2xl bg-base-200 border border-base-300 h-13 px-4 font-semibold text-base-content focus:outline-none focus:border-indigo-500"
                 >
                   <option value="Visa Card">Visa Debit Card (*4221)</option>
                   <option value="Mastercard">Mastercard Gold (*8890)</option>
@@ -467,12 +467,12 @@ export default function Dashboard() {
             {view === "bill" && (
               <div className="form-control mb-5">
                 <label className="label pb-1.5">
-                  <span className="label-text font-bold text-gray-700 text-sm tracking-wide">Utility Provider</span>
+                  <span className="label-text font-bold text-base-content/80 text-sm tracking-wide">Utility Provider</span>
                 </label>
                 <select
                   value={biller}
                   onChange={(e) => setBiller(e.target.value)}
-                  className="select select-bordered w-full rounded-2xl bg-gray-50 border border-gray-200 h-13 px-4 font-semibold text-gray-800 focus:outline-none focus:border-indigo-500"
+                  className="select select-bordered w-full rounded-2xl bg-base-200 border border-base-300 h-13 px-4 font-semibold text-base-content focus:outline-none focus:border-indigo-500"
                 >
                   <option value="DESCO Electricity">DESCO Electricity</option>
                   <option value="Dhaka WASA Water">Dhaka WASA Water</option>

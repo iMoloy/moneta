@@ -23,7 +23,7 @@ export const InputGroup = ({
   return (
     <div className="form-control mb-5 w-full">
       <label className="label pb-1.5">
-        <span className="label-text font-bold text-gray-700 text-sm tracking-wide">
+        <span className="label-text font-bold text-base-content/80 text-sm tracking-wide">
           {label}
         </span>
       </label>
@@ -39,11 +39,11 @@ export const InputGroup = ({
         <input
           type={inputType}
           placeholder={placeholder}
-          className={`input w-full rounded-2xl bg-gray-50 border border-gray-200 h-13 ${
+          className={`input w-full rounded-2xl bg-base-200 border border-base-300 h-13 ${
             iconClass ? "pl-11" : "px-5"
           } ${
             isPassword ? "pr-12" : "pr-5"
-          } focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all outline-none text-gray-800 placeholder:text-gray-400 font-medium`}
+          } focus:bg-base-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none text-base-content placeholder:text-gray-400 font-medium`}
           value={value}
           onChange={onChange}
           maxLength={max}

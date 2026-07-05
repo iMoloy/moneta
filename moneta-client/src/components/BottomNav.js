@@ -8,7 +8,7 @@ export default function BottomNav({ activeView, setView }) {
   ];
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-20 bg-white border-t border-gray-100 flex items-center justify-around px-6 z-40">
+    <div className="absolute bottom-0 left-0 right-0 h-20 bg-base-100 border-t border-base-200 flex items-center justify-around px-6 z-40">
       {navItems.map((item) => {
         const isActive = activeView === item.id || (item.id === "home" && !["history", "profile"].includes(activeView));
         return (
