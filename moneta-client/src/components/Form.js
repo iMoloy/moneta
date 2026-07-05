@@ -41,14 +41,14 @@ export const InputGroup = ({
           error
             ? isDark
               ? "border-red-500/50 bg-red-950/10"
-              : "border-red-500/50 bg-red-50/30"
+              : "border-red-400/60 bg-red-50/30"
             : isFocused
             ? isDark
               ? "border-indigo-400 bg-slate-900/80 shadow-[0_0_12px_rgba(99,102,241,0.2)]"
-              : "border-indigo-600 bg-white shadow-[0_0_10px_rgba(79,70,229,0.12)]"
+              : "border-indigo-500 bg-white shadow-[0_0_10px_rgba(79,70,229,0.12)]"
             : isDark
             ? "border-white/[0.08] hover:border-white/20 bg-white/5"
-            : "border-base-200 hover:border-base-300 bg-base-200/40"
+            : "border-base-300 hover:border-indigo-300 bg-base-100 shadow-sm hover:shadow-md"
         }`}
       >
         {/* Shifting Prefix Icon */}

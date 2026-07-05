@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { InputGroup, ActionButton } from "@/components/Form";
 import BottomNav from "@/components/BottomNav";
 import ThemeToggle from "@/components/ThemeToggle";
+import { toast } from "react-toastify";
 
 export default function Dashboard() {
   const {
@@ -17,12 +18,29 @@ export default function Dashboard() {
     transfer,
     payBill,
     claimCoupon,
+    updateProfileImage,
   } = useContext(BankContext);
 
   const router = useRouter();
 
   // View states: home, history, profile, add, cash, send, bill, bonus
   const [view, setView] = useState("home");
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size must be less than 5MB.");
+      return;
+    }
+
+    try {
+      await updateProfileImage(file);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   
   // Balance tap-to-reveal toggle
   const [showBalance, setShowBalance] = useState(false);
@@ -114,7 +132,7 @@ export default function Dashboard() {
       }
     }
 
-    setErrors(errors);
+    setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
@@ -151,14 +169,22 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-base-200 overflow-hidden pb-20 relative select-none">
+    <div className="flex-1 flex flex-col min-h-0 bg-base-200 dark:bg-slate-900 overflow-hidden pb-20 relative select-none">
       
-      {/* 1. Header Profile Banner */}
-      <header className="px-5.5 pt-7 pb-5 flex justify-between items-center bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 text-white rounded-b-[2.2rem] border-b border-white/10 shrink-0 shadow-md">
+      {/* 1. Header Banner */}
+      <header className="mx-5.5 px-5.5 pt-7 pb-5 flex justify-between items-center bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 text-white rounded-b-[2rem] border-b border-l border-r border-white/10 shrink-0 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-sm shadow-md">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
+          {user.image ? (
+            <img
+              src={user.image}
+              alt={user.name}
+              className="w-10 h-10 rounded-full object-cover shadow-md border-2 border-white/20"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-sm shadow-md border-2 border-white/20">
+              {user.name.charAt(0).toUpperCase()}
+            </div>
+          )}
           <div>
             <p className="text-[9px] text-indigo-200/50 font-black uppercase tracking-widest leading-none">Welcome back,</p>
             <h3 className="font-extrabold text-white text-sm leading-tight mt-0.5">{user.name}</h3>
@@ -177,44 +203,77 @@ export default function Dashboard() {
       </header>
 
       {/* Main View Scroll Area */}
-      <main className="px-5.5 py-4 overflow-y-auto flex-1 no-scrollbar pb-6">
+      <main className="px-5.5 py-4 overflow-y-auto flex-1 no-scrollbar pb-24">
         
         {/* 2. Premium Metallic Credit Card Balance Card */}
-        <div 
-          className="w-full aspect-[1.58/1] rounded-[2.2rem] bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-6 shadow-xl shadow-slate-950/20 text-white relative overflow-hidden mb-6.5 border border-white/5"
-        >
-          {/* Subtle glow highlight circles inside the card background */}
-          <div className="absolute right-0 top-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
-          <div className="absolute left-0 bottom-0 w-24 h-24 bg-violet-500/10 rounded-full blur-2xl"></div>
-          
+        <div className="w-full rounded-[2.2rem] bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-6 shadow-xl shadow-slate-950/20 text-white relative overflow-hidden mb-6.5 border border-white/5 flex flex-col gap-4">
+          {/* Ambient glow blobs */}
+          <div className="absolute right-0 top-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute left-0 bottom-0 w-32 h-32 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          {/* Top row: balance label + chip */}
           <div className="flex justify-between items-start z-10 relative">
             <div>
-              <p className="text-[8px] text-indigo-300/80 font-black uppercase tracking-widest mb-1.5">
-                Available Wallet Balance
-              </p>
-              <h2 className="text-2.8xl font-black tracking-wider transition-all duration-300">
+              <p className="text-[8px] text-indigo-300/70 font-black uppercase tracking-widest mb-1.5">Available Wallet Balance</p>
+              <h2 className="text-3xl font-black tracking-wider transition-all duration-300">
                 {showBalance ? `$${user.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "••••••••"}
               </h2>
             </div>
-            
-            {/* Custom Embedded Microchip Graphic */}
-            <svg className="w-8 h-6 shrink-0 select-none" viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="1" width="30" height="22" rx="3.5" fill="#EAB308" stroke="#FEF08A" strokeWidth="1"/>
-              <path d="M16 1V23M1 12H31M8 6H24V18H8V6Z" stroke="#854D0E" strokeWidth="0.8"/>
-            </svg>
+            <div className="flex flex-col items-end gap-1.5">
+              <svg className="w-8 h-6 shrink-0 select-none" viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="30" height="22" rx="3.5" fill="#EAB308" stroke="#FEF08A" strokeWidth="1"/>
+                <path d="M16 1V23M1 12H31M8 6H24V18H8V6Z" stroke="#854D0E" strokeWidth="0.8"/>
+              </svg>
+              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-indigo-300/40 select-none">MONETA</span>
+            </div>
           </div>
-          
-          {/* Card Chip connection visuals */}
-          <div className="mt-6.5 flex justify-between items-end z-10 relative select-none">
+
+          {/* Middle: Total In / Out stats */}
+          <div className="flex gap-5 z-10 relative">
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <i className="fa-solid fa-arrow-down text-[8px] text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[7px] text-indigo-200/40 font-bold uppercase tracking-wider leading-none">Total In</p>
+                <p className="text-[10px] font-black text-emerald-400 leading-tight mt-0.5">
+                  ${transactions.filter(t => t.type === "credit").reduce((s, t) => s + t.amount, 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+            <div className="w-px bg-white/5 self-stretch" />
+            <div className="flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0">
+                <i className="fa-solid fa-arrow-up text-[8px] text-rose-400" />
+              </div>
+              <div>
+                <p className="text-[7px] text-indigo-200/40 font-bold uppercase tracking-wider leading-none">Total Out</p>
+                <p className="text-[10px] font-black text-rose-400 leading-tight mt-0.5">
+                  ${transactions.filter(t => t.type === "debit").reduce((s, t) => s + t.amount, 0).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Thin glowing divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent z-10 relative" />
+
+          {/* Bottom row: account number + hologram + show/hide */}
+          <div className="flex justify-between items-center z-10 relative select-none">
             <div>
               <p className="text-[7.5px] text-indigo-200/40 font-bold uppercase tracking-widest leading-none">Account Number</p>
               <p className="text-sm font-semibold tracking-widest mt-1 text-indigo-200">{user.phone}</p>
             </div>
-            <div 
+            {/* Hologram circles — next to account number */}
+            <div className="flex items-center select-none mx-auto">
+              <div className="w-6 h-6 rounded-full bg-amber-400/20 border border-amber-300/15 -mr-2.5" />
+              <div className="w-6 h-6 rounded-full bg-indigo-400/20 border border-indigo-300/15" />
+            </div>
+            <div
               onClick={() => setShowBalance(!showBalance)}
               className="bg-white/10 hover:bg-white/20 active:scale-95 px-2.5 py-1 rounded-full text-[9px] font-black tracking-widest flex flex-row items-center justify-center gap-1.5 border border-white/5 uppercase select-none whitespace-nowrap cursor-pointer transition-all duration-150"
             >
-              <i className={`fa-solid ${showBalance ? "fa-eye-slash" : "fa-eye"} text-[10px] leading-none`}></i>
+              <i className={`fa-solid ${showBalance ? "fa-eye-slash" : "fa-eye"} text-[10px] leading-none`} />
               <span className="translate-y-[0.5px] leading-none">{showBalance ? "Hide" : "Show"}</span>
             </div>
           </div>
@@ -226,25 +285,29 @@ export default function Dashboard() {
             <div className="mb-6.5">
               <h4 className="text-[10px] font-black text-indigo-600 tracking-widest uppercase mb-3 pl-1">Wallet Services</h4>
               
-              {/* Premium dark gradient capsules grid */}
-              <div className="grid grid-cols-3 gap-3.5">
+              {/* Mini ATM-card style service buttons — 3 col, compact */}
+              <div className="grid grid-cols-3 gap-2.5">
                 {[
-                  { id: "add", label: "Add Money", icon: "fa-circle-plus", colorClass: "text-indigo-400 bg-white/5" },
-                  { id: "cash", label: "Cash Out", icon: "fa-arrow-up-from-bracket", colorClass: "text-emerald-400 bg-white/5" },
-                  { id: "send", label: "Send Money", icon: "fa-paper-plane", colorClass: "text-amber-400 bg-white/5" },
-                  { id: "bill", label: "Pay Bill", icon: "fa-file-invoice-dollar", colorClass: "text-cyan-400 bg-white/5" },
-                  { id: "bonus", label: "Promo Code", icon: "fa-gift", colorClass: "text-rose-400 bg-white/5" },
-                  { id: "history", label: "History", icon: "fa-clock-rotate-left", colorClass: "text-purple-400 bg-white/5" },
+                  { id: "add",     label: "Add Money",  icon: "fa-circle-plus",           glow: "bg-indigo-500/30",  iconColor: "text-indigo-300" },
+                  { id: "cash",    label: "Cash Out",   icon: "fa-arrow-up-from-bracket",  glow: "bg-emerald-500/30", iconColor: "text-emerald-300" },
+                  { id: "send",    label: "Send Money", icon: "fa-paper-plane",            glow: "bg-amber-500/30",   iconColor: "text-amber-300" },
+                  { id: "bill",    label: "Pay Bill",   icon: "fa-file-invoice-dollar",    glow: "bg-cyan-500/30",    iconColor: "text-cyan-300" },
+                  { id: "bonus",   label: "Promo Code", icon: "fa-gift",                   glow: "bg-rose-500/30",    iconColor: "text-rose-300" },
+                  { id: "history", label: "History",    icon: "fa-clock-rotate-left",      glow: "bg-purple-500/30",  iconColor: "text-purple-300" },
                 ].map((srv) => (
                   <button
                     key={srv.id}
                     onClick={() => setView(srv.id)}
-                    className="flex flex-col items-center justify-center p-3.5 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 border border-white/5 rounded-[2.5rem] hover:brightness-110 active:scale-95 transition-all shadow-md shadow-black/10 cursor-pointer text-white"
+                    className="relative overflow-hidden flex flex-col justify-between p-3 h-[72px] bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 border border-white/5 rounded-2xl shadow-md shadow-black/20 hover:brightness-110 hover:border-white/10 active:scale-95 transition-all duration-200 cursor-pointer text-white"
                   >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm mb-2.5 ${srv.colorClass}`}>
-                      <i className={`fa-solid ${srv.icon}`}></i>
-                    </div>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-indigo-100/90 leading-none text-center">
+                    {/* Colored glow — bottom right */}
+                    <div className={`absolute -bottom-3 -right-3 w-16 h-16 ${srv.glow} rounded-full blur-2xl pointer-events-none`} />
+
+                    {/* Icon — top left */}
+                    <i className={`fa-solid ${srv.icon} relative z-10 text-base ${srv.iconColor}`} />
+
+                    {/* Label — bottom left */}
+                    <span className="relative z-10 text-[7.5px] font-black uppercase tracking-widest text-indigo-100/70 leading-none">
                       {srv.label}
                     </span>
                   </button>
@@ -379,16 +442,61 @@ export default function Dashboard() {
         {/* 6. Profile View */}
         {view === "profile" && (
           <div className="animate-in fade-in duration-300 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-7.5 rounded-[2.2rem] shadow-md border border-white/5 text-center text-white">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-2xl shadow-md mx-auto mb-3.5">
-              {user.name.charAt(0).toUpperCase()}
+            <div className="relative group w-18 h-18 mx-auto mb-3.5">
+              {user.image ? (
+                <img
+                  src={user.image}
+                  alt={user.name}
+                  className="w-18 h-18 rounded-full object-cover shadow-md border-2 border-indigo-500/50"
+                />
+              ) : (
+                <div className="w-18 h-18 rounded-full bg-gradient-to-tr from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-black text-2.5xl shadow-md">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {/* Overlapping camera icon button to choose local image file */}
+              <label
+                htmlFor="avatar-upload"
+                className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center border border-slate-950 cursor-pointer shadow-md transition-all duration-200"
+                title="Change Profile Picture"
+              >
+                <i className="fa-solid fa-camera text-[9px]"></i>
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
             <h3 className="text-base font-extrabold text-white leading-none">{user.name}</h3>
             <p className="text-[8px] text-indigo-200/50 font-black uppercase tracking-widest mt-1.5">Registered Member</p>
 
-            <div className="mt-6 border-t border-white/5 pt-5 text-left flex flex-col gap-3.5">
+            {/* Balance summary pills */}
+            <div className="flex gap-3 mt-4 justify-center">
+              <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-2.5 text-center">
+                <p className="text-[7px] text-emerald-400/70 font-black uppercase tracking-wider">Total In</p>
+                <p className="text-xs font-black text-emerald-400 mt-0.5">${transactions.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0).toFixed(2)}</p>
+              </div>
+              <div className="flex-1 bg-white/5 border border-white/5 rounded-2xl p-2.5 text-center">
+                <p className="text-[7px] text-indigo-200/50 font-black uppercase tracking-wider">Balance</p>
+                <p className="text-xs font-black text-white mt-0.5">${user.balance?.toFixed(2)}</p>
+              </div>
+              <div className="flex-1 bg-rose-500/10 border border-rose-500/20 rounded-2xl p-2.5 text-center">
+                <p className="text-[7px] text-rose-400/70 font-black uppercase tracking-wider">Total Out</p>
+                <p className="text-xs font-black text-rose-400 mt-0.5">${transactions.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0).toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 border-t border-white/5 pt-5 text-left flex flex-col gap-3.5">
               <div>
                 <p className="text-[8px] text-indigo-200/40 font-black uppercase tracking-widest">Mobile Account</p>
                 <p className="text-xs text-white font-semibold mt-1">{user.phone}</p>
+              </div>
+              <div>
+                <p className="text-[8px] text-indigo-200/40 font-black uppercase tracking-widest">Member Since</p>
+                <p className="text-xs text-white font-semibold mt-1">{user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—"}</p>
               </div>
               <div>
                 <p className="text-[8px] text-indigo-200/40 font-black uppercase tracking-widest">Unique ID</p>

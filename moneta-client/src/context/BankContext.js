@@ -28,7 +28,12 @@ export const BankProvider = ({ children }) => {
   const { data: sessionData, isPending: authLoading, refetch: refetchSession } =
     authClient.useSession();
 
-  const user = sessionData?.user;
+  // Local avatar state to reflect upload immediately without waiting for session refresh
+  const [localAvatar, setLocalAvatar] = useState(null);
+
+  const rawUser = sessionData?.user;
+  // Merge localAvatar over session user image so UI updates instantly after upload
+  const user = rawUser ? { ...rawUser, image: localAvatar || rawUser.image || rawUser.avatar } : rawUser;
 
   // Reusable API fetch helper that attaches cookies credentials
   const apiFetch = async (path, options = {}) => {
@@ -161,6 +166,57 @@ export const BankProvider = ({ children }) => {
     }
   };
 
+  const updateProfileImage = async (file) => {
+    setLoading(true);
+    try {
+      let imageUrl = null;
+      const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+
+      // Try ImgBB upload first if key is present
+      if (apiKey) {
+        try {
+          const formData = new FormData();
+          formData.append("image", file);
+          const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+            method: "POST",
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.data?.url) imageUrl = data.data.url;
+          }
+        } catch (_) {}
+      }
+
+      // Fallback: encode as Base64 Data URL locally
+      if (!imageUrl) {
+        imageUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("Failed to read image file."));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // Save to backend MongoDB
+      await apiFetch("/api/wallet/profile-image", {
+        method: "POST",
+        body: JSON.stringify({ imageUrl }),
+      });
+
+      // Update local state immediately so UI reflects new avatar without session cache wait
+      setLocalAvatar(imageUrl);
+
+      toast.success("Profile picture updated!");
+      return imageUrl;
+    } catch (err) {
+      toast.error(err.message || "Failed to update profile image.");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Sync transaction logs on user change
   useEffect(() => {
     if (user) {
@@ -178,6 +234,7 @@ export const BankProvider = ({ children }) => {
         register,
         logout,
         fetchTransactions,
+        updateProfileImage,
         addMoney: (amount, pin, source) => runTransaction("/api/wallet/add-money", { amount, pin, source }),
         cashOut: (amount, pin, agentPhone) => runTransaction("/api/wallet/cashout", { amount, pin, agentPhone }),
         transfer: (amount, pin, receiverPhone) => runTransaction("/api/wallet/transfer", { amount, pin, receiverPhone }),

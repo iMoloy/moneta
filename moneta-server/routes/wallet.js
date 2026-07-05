@@ -358,4 +358,33 @@ router.get("/transactions", async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/wallet/profile-image
+ * @desc    Update user profile image URL
+ */
+router.post("/profile-image", async (req, res) => {
+  const { imageUrl } = req.body;
+
+  if (!imageUrl) {
+    return res.status(400).json({ error: "Image URL is required." });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { avatar: imageUrl, image: imageUrl } },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.json({ success: true, avatar: imageUrl, image: imageUrl });
+  } catch (error) {
+    console.error("Update profile image error:", error.message);
+    res.status(500).json({ error: "Failed to update profile image." });
+  }
+});
+
 export default router;

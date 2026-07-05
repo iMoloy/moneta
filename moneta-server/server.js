@@ -23,7 +23,8 @@ app.use(
 // Better Auth routes handler
 app.all("/api/auth/*", toNodeHandler(auth));
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // Wallet API Routes
 app.use("/api/wallet", walletRouter);

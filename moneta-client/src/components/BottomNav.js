@@ -8,7 +8,7 @@ export default function BottomNav({ activeView, setView }) {
   ];
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 rounded-t-[2.2rem] border-t border-white/10 flex items-center justify-around px-6 z-40 shadow-lg shadow-slate-950/20">
+    <div className="absolute bottom-0 left-[22px] right-[22px] h-20 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 rounded-t-[2rem] border-t border-l border-r border-white/10 flex items-center justify-around px-4 z-40 shadow-lg shadow-slate-950/20">
       {navItems.map((item) => {
         const isActive = activeView === item.id || (item.id === "home" && !["history", "profile"].includes(activeView));
         return (
