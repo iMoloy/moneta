@@ -8,6 +8,7 @@ const db = client.db();
 const trustedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  "https://moneta-topaz.vercel.app",
   "https://moneta-client.vercel.app",
   "https://moneta.vercel.app",
   ...(process.env.CLIENT_URL || "")

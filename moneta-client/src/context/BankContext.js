@@ -8,7 +8,7 @@ const defaultServerUrl =
   process.env.NEXT_PUBLIC_SERVER_URL ||
   process.env.NEXT_PUBLIC_VERCEL_SERVER_URL ||
   (process.env.NODE_ENV === "production"
-    ? "https://moneta-server.vercel.app"
+    ? "https://moneta-server-two.vercel.app"
     : "http://localhost:5000");
 
 // Initialize Better Auth Client pointing to Express Server
