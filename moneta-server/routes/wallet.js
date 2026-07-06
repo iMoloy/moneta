@@ -1,5 +1,4 @@
 import express from "express";
-import crypto from "crypto";
 import User from "../models/User.js";
 import Transaction from "../models/Transaction.js";
 import Coupon from "../models/Coupon.js";
@@ -7,13 +6,10 @@ import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Helper to hash/verify transaction PINs
-const hashPin = (pin) => {
-  return crypto.createHash("sha256").update(pin).digest("hex");
-};
-
+// Verify transaction PIN — the client always pre-hashes the PIN with SHA-256
+// before sending, so we compare the received hash directly to the stored hash.
 const verifyPin = (inputPin, storedPinHash) => {
-  return hashPin(inputPin) === storedPinHash;
+  return inputPin === storedPinHash;
 };
 
 // All wallet routes require authorization
