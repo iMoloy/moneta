@@ -83,7 +83,7 @@ export default function Login() {
             placeholder="01XXXXXXXXX"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            max="11"
+            maxLength="11"
             iconClass="fa-solid fa-phone"
             error={errors.phone}
             variant="dark"

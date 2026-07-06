@@ -84,7 +84,7 @@ export const BankProvider = ({ children }) => {
   const register = async (name, phone, password, pin) => {
     setLoading(true);
     try {
-      if (pin.length !== 4 || isNaN(pin)) {
+      if (!/^\d{4}$/.test(pin)) {
         throw new Error("Security PIN must be a 4-digit number.");
       }
 

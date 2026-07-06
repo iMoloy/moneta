@@ -104,7 +104,7 @@ export default function Register() {
             placeholder="01XXXXXXXXX"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            max="11"
+            maxLength="11"
             iconClass="fa-solid fa-phone"
             error={errors.phone}
             variant="dark"
@@ -125,7 +125,7 @@ export default function Register() {
             placeholder="••••"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            max="4"
+            maxLength="4"
             iconClass="fa-solid fa-key"
             error={errors.pin}
             variant="dark"

@@ -595,7 +595,7 @@ export default function Dashboard() {
                     placeholder={view === "bill" ? "e.g. 100988776" : "01XXXXXXXXX"}
                     value={targetAccount}
                     onChange={(e) => setTargetAccount(e.target.value)}
-                    max={view !== "bill" ? "11" : undefined}
+                    maxLength={view !== "bill" ? "11" : undefined}
                     iconClass={view !== "bill" ? "fa-solid fa-phone" : "fa-solid fa-hashtag"}
                     error={formErrors.account}
                     variant="dark"
@@ -619,7 +619,7 @@ export default function Dashboard() {
                   placeholder="••••"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  max="4"
+                  maxLength="4"
                   iconClass="fa-solid fa-key"
                   error={formErrors.pin}
                   variant="dark"

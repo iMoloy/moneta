@@ -11,7 +11,7 @@ export const InputGroup = ({
   placeholder,
   value,
   onChange,
-  max,
+  maxLength,
   required = true,
   iconClass,
   error,
@@ -78,7 +78,7 @@ export const InputGroup = ({
           } ${isPassword ? "pr-12" : "pr-4.5"}`}
           value={value}
           onChange={onChange}
-          maxLength={max}
+          maxLength={maxLength}
           required={required}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
