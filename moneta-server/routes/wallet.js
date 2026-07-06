@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import User from "../models/User.js";
 import Transaction from "../models/Transaction.js";
 import Coupon from "../models/Coupon.js";
@@ -149,58 +150,78 @@ router.post("/transfer", async (req, res) => {
       return res.status(400).json({ error: "Cannot transfer money to yourself." });
     }
 
-    const sender = await User.findById(req.user.id);
-    if (!sender) {
-      return res.status(404).json({ error: "Sender not found." });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const sender = await User.findById(req.user.id).session(session);
+      if (!sender) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: "Sender not found." });
+      }
+
+      if (!verifyPin(pin, sender.pin)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(401).json({ error: "Incorrect security PIN." });
+      }
+
+      if (sender.balance < val) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Insufficient balance." });
+      }
+
+      // Find receiver
+      const receiver = await User.findOne({ phone: receiverPhone }).session(session);
+      if (!receiver) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: "Recipient number not registered on Moneta." });
+      }
+
+      // Atomic updates
+      sender.balance -= val;
+      receiver.balance += val;
+      await sender.save({ session });
+      await receiver.save({ session });
+
+      // Log sender's transaction
+      const senderTx = new Transaction({
+        userId: sender._id,
+        title: `Transfer to ${receiver.name}`,
+        amount: val,
+        type: "debit",
+        category: "transfer",
+        counterParty: receiver.phone,
+      });
+      await senderTx.save({ session });
+
+      // Log receiver's transaction
+      const receiverTx = new Transaction({
+        userId: receiver._id,
+        title: `Received from ${sender.name}`,
+        amount: val,
+        type: "credit",
+        category: "transfer",
+        counterParty: sender.phone,
+      });
+      await receiverTx.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        message: "Transfer successful.",
+        balance: sender.balance,
+        transaction: senderTx,
+      });
+    } catch (transactionError) {
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError; // Pass to outer catch block
     }
-
-    if (!verifyPin(pin, sender.pin)) {
-      return res.status(401).json({ error: "Incorrect security PIN." });
-    }
-
-    if (sender.balance < val) {
-      return res.status(400).json({ error: "Insufficient balance." });
-    }
-
-    // Find receiver
-    const receiver = await User.findOne({ phone: receiverPhone });
-    if (!receiver) {
-      return res.status(404).json({ error: "Recipient number not registered on Moneta." });
-    }
-
-    // Atomic updates
-    sender.balance -= val;
-    receiver.balance += val;
-    await sender.save();
-    await receiver.save();
-
-    // Log sender's transaction
-    const senderTx = new Transaction({
-      userId: sender._id,
-      title: `Transfer to ${receiver.name}`,
-      amount: val,
-      type: "debit",
-      category: "transfer",
-      counterParty: receiver.phone,
-    });
-    await senderTx.save();
-
-    // Log receiver's transaction
-    const receiverTx = new Transaction({
-      userId: receiver._id,
-      title: `Received from ${sender.name}`,
-      amount: val,
-      type: "credit",
-      category: "transfer",
-      counterParty: sender.phone,
-    });
-    await receiverTx.save();
-
-    res.json({
-      message: "Transfer successful.",
-      balance: sender.balance,
-      transaction: senderTx,
-    });
   } catch (error) {
     console.error("Transfer error:", error.message);
     res.status(500).json({ error: "Failed to process transfer." });
