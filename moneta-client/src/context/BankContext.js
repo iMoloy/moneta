@@ -222,6 +222,7 @@ export const BankProvider = ({ children }) => {
     if (user) {
       fetchTransactions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return (
