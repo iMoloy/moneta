@@ -20,9 +20,15 @@ const clientOrigins = [
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  ...(process.env.NEXT_PUBLIC_CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
 ].filter((origin, index, array) => array.indexOf(origin) === index);
 
 // Enable CORS with support for credentials (required for cookies-based auth sessions)
+app.options("*", cors({ origin: clientOrigins, credentials: true }));
 app.use(
   cors({
     origin: clientOrigins,

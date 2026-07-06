@@ -14,6 +14,11 @@ const trustedOrigins = [
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  ...(process.env.NEXT_PUBLIC_CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
 ].filter((origin, index, array) => array.indexOf(origin) === index);
 
 export const auth = betterAuth({
