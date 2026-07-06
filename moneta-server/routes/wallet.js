@@ -33,36 +33,51 @@ router.post("/add-money", async (req, res) => {
       return res.status(400).json({ error: "Security PIN is required." });
     }
 
-    // Fetch user from DB to get the latest credentials
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const user = await User.findById(req.user.id).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      if (!verifyPin(pin, user.pin)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(401).json({ error: "Incorrect security PIN." });
+      }
+
+      // Increment balance
+      user.balance += val;
+      await user.save({ session });
+
+      // Log transaction
+      const tx = new Transaction({
+        userId: user._id,
+        title: `Deposit from ${source || "Bank/Card"}`,
+        amount: val,
+        type: "credit",
+        category: "add",
+        counterParty: source || "External Source",
+      });
+      await tx.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        message: "Money added successfully.",
+        balance: user.balance,
+        transaction: tx,
+      });
+    } catch (transactionError) {
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError;
     }
-
-    if (!verifyPin(pin, user.pin)) {
-      return res.status(401).json({ error: "Incorrect security PIN." });
-    }
-
-    // Increment balance
-    user.balance += val;
-    await user.save();
-
-    // Log transaction
-    const tx = new Transaction({
-      userId: user._id,
-      title: `Deposit from ${source || "Bank/Card"}`,
-      amount: val,
-      type: "credit",
-      category: "add",
-      counterParty: source || "External Source",
-    });
-    await tx.save();
-
-    res.json({
-      message: "Money added successfully.",
-      balance: user.balance,
-      transaction: tx,
-    });
   } catch (error) {
     console.error("Add money error:", error.message);
     res.status(500).json({ error: "Failed to process transaction." });
@@ -89,40 +104,58 @@ router.post("/cashout", async (req, res) => {
     const fee = val * 0.0185;
     const totalDeduction = val + fee;
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const user = await User.findById(req.user.id).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      if (!verifyPin(pin, user.pin)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(401).json({ error: "Incorrect security PIN." });
+      }
+
+      if (user.balance < totalDeduction) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Insufficient balance to cover withdrawal and fee." });
+      }
+
+      // Deduct balance
+      user.balance -= totalDeduction;
+      await user.save({ session });
+
+      // Log transaction
+      const tx = new Transaction({
+        userId: user._id,
+        title: "Cash Out Withdrawal",
+        amount: val, // Log base amount withdrawn
+        type: "debit",
+        category: "cashout",
+        counterParty: agentPhone,
+      });
+      await tx.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        message: "Cash out withdrawal successful.",
+        balance: user.balance,
+        fee,
+        transaction: tx,
+      });
+    } catch (transactionError) {
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError;
     }
-
-    if (!verifyPin(pin, user.pin)) {
-      return res.status(401).json({ error: "Incorrect security PIN." });
-    }
-
-    if (user.balance < totalDeduction) {
-      return res.status(400).json({ error: "Insufficient balance to cover withdrawal and fee." });
-    }
-
-    // Deduct balance
-    user.balance -= totalDeduction;
-    await user.save();
-
-    // Log transaction
-    const tx = new Transaction({
-      userId: user._id,
-      title: "Cash Out Withdrawal",
-      amount: val, // Log base amount withdrawn
-      type: "debit",
-      category: "cashout",
-      counterParty: agentPhone,
-    });
-    await tx.save();
-
-    res.json({
-      message: "Cash out withdrawal successful.",
-      balance: user.balance,
-      fee,
-      transaction: tx,
-    });
   } catch (error) {
     console.error("Cash out error:", error.message);
     res.status(500).json({ error: "Failed to process withdrawal." });
@@ -245,39 +278,57 @@ router.post("/pay-bill", async (req, res) => {
       return res.status(400).json({ error: "Biller name and subscriber ID are required." });
     }
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const user = await User.findById(req.user.id).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      if (!verifyPin(pin, user.pin)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(401).json({ error: "Incorrect security PIN." });
+      }
+
+      if (user.balance < val) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Insufficient balance." });
+      }
+
+      // Deduct balance
+      user.balance -= val;
+      await user.save({ session });
+
+      // Log transaction
+      const tx = new Transaction({
+        userId: user._id,
+        title: `Utility Bill (${billerName})`,
+        amount: val,
+        type: "debit",
+        category: "bill",
+        counterParty: `${billerName} - Sub ID: ${subscriberId}`,
+      });
+      await tx.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        message: "Bill payment successful.",
+        balance: user.balance,
+        transaction: tx,
+      });
+    } catch (transactionError) {
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError;
     }
-
-    if (!verifyPin(pin, user.pin)) {
-      return res.status(401).json({ error: "Incorrect security PIN." });
-    }
-
-    if (user.balance < val) {
-      return res.status(400).json({ error: "Insufficient balance." });
-    }
-
-    // Deduct balance
-    user.balance -= val;
-    await user.save();
-
-    // Log transaction
-    const tx = new Transaction({
-      userId: user._id,
-      title: `Utility Bill (${billerName})`,
-      amount: val,
-      type: "debit",
-      category: "bill",
-      counterParty: `${billerName} - Sub ID: ${subscriberId}`,
-    });
-    await tx.save();
-
-    res.json({
-      message: "Bill payment successful.",
-      balance: user.balance,
-      transaction: tx,
-    });
   } catch (error) {
     console.error("Pay bill error:", error.message);
     res.status(500).json({ error: "Failed to pay bill." });
@@ -296,46 +347,64 @@ router.post("/claim-coupon", async (req, res) => {
       return res.status(400).json({ error: "Promo coupon code is required." });
     }
 
-    const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true });
-    if (!coupon) {
-      return res.status(404).json({ error: "Invalid or expired promo code." });
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true }).session(session);
+      if (!coupon) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: "Invalid or expired promo code." });
+      }
+
+      // Check if user has already claimed this coupon
+      const hasClaimed = coupon.claimedBy.includes(req.user.id);
+      if (hasClaimed) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "You have already claimed this promo code." });
+      }
+
+      const user = await User.findById(req.user.id).session(session);
+      if (!user) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({ error: "User not found." });
+      }
+
+      // Apply reward
+      user.balance += coupon.bonusAmount;
+      await user.save({ session });
+
+      // Log coupon claim
+      coupon.claimedBy.push(user._id);
+      await coupon.save({ session });
+
+      // Log transaction
+      const tx = new Transaction({
+        userId: user._id,
+        title: `Promo Reward (${coupon.code})`,
+        amount: coupon.bonusAmount,
+        type: "credit",
+        category: "bonus",
+        counterParty: "System Promo",
+      });
+      await tx.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        message: `Successfully redeemed coupon! Bonus of $${coupon.bonusAmount} added to balance.`,
+        balance: user.balance,
+        transaction: tx,
+      });
+    } catch (transactionError) {
+      await session.abortTransaction();
+      session.endSession();
+      throw transactionError;
     }
-
-    // Check if user has already claimed this coupon
-    const hasClaimed = coupon.claimedBy.includes(req.user.id);
-    if (hasClaimed) {
-      return res.status(400).json({ error: "You have already claimed this promo code." });
-    }
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    // Apply reward
-    user.balance += coupon.bonusAmount;
-    await user.save();
-
-    // Log coupon claim
-    coupon.claimedBy.push(user._id);
-    await coupon.save();
-
-    // Log transaction
-    const tx = new Transaction({
-      userId: user._id,
-      title: `Promo Reward (${coupon.code})`,
-      amount: coupon.bonusAmount,
-      type: "credit",
-      category: "bonus",
-      counterParty: "System Promo",
-    });
-    await tx.save();
-
-    res.json({
-      message: `Successfully redeemed coupon! Bonus of $${coupon.bonusAmount} added to balance.`,
-      balance: user.balance,
-      transaction: tx,
-    });
   } catch (error) {
     console.error("Claim coupon error:", error.message);
     res.status(500).json({ error: "Failed to redeem coupon." });
