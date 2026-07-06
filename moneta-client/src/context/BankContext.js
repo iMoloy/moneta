@@ -4,9 +4,15 @@ import { createAuthClient } from "better-auth/react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
+const defaultServerUrl =
+  process.env.NEXT_PUBLIC_SERVER_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://moneta-server.vercel.app"
+    : "http://localhost:5000");
+
 // Initialize Better Auth Client pointing to Express Server
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000",
+  baseURL: defaultServerUrl,
 });
 
 export const BankContext = createContext();
@@ -25,19 +31,24 @@ export const BankProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   // Fetch session reactively using Better Auth Hook
-  const { data: sessionData, isPending: authLoading, refetch: refetchSession } =
-    authClient.useSession();
+  const {
+    data: sessionData,
+    isPending: authLoading,
+    refetch: refetchSession,
+  } = authClient.useSession();
 
   // Local avatar state to reflect upload immediately without waiting for session refresh
   const [localAvatar, setLocalAvatar] = useState(null);
 
   const rawUser = sessionData?.user;
   // Merge localAvatar over session user image so UI updates instantly after upload
-  const user = rawUser ? { ...rawUser, image: localAvatar || rawUser.image || rawUser.avatar } : rawUser;
+  const user = rawUser
+    ? { ...rawUser, image: localAvatar || rawUser.image || rawUser.avatar }
+    : rawUser;
 
   // Reusable API fetch helper that attaches cookies credentials
   const apiFetch = async (path, options = {}) => {
-    const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+    const serverUrl = defaultServerUrl;
     const res = await fetch(`${serverUrl}${path}`, {
       ...options,
       headers: {
@@ -100,7 +111,9 @@ export const BankProvider = ({ children }) => {
       });
 
       if (error) {
-        throw new Error(error.message || "Registration failed. Phone might be in use.");
+        throw new Error(
+          error.message || "Registration failed. Phone might be in use.",
+        );
       }
 
       toast.success("Registration successful! Please login.");
@@ -177,10 +190,13 @@ export const BankProvider = ({ children }) => {
         try {
           const formData = new FormData();
           formData.append("image", file);
-          const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-            method: "POST",
-            body: formData,
-          });
+          const res = await fetch(
+            `https://api.imgbb.com/1/upload?key=${apiKey}`,
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
           if (res.ok) {
             const data = await res.json();
             if (data?.data?.url) imageUrl = data.data.url;
@@ -193,7 +209,8 @@ export const BankProvider = ({ children }) => {
         imageUrl = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result);
-          reader.onerror = () => reject(new Error("Failed to read image file."));
+          reader.onerror = () =>
+            reject(new Error("Failed to read image file."));
           reader.readAsDataURL(file);
         });
       }
@@ -236,11 +253,25 @@ export const BankProvider = ({ children }) => {
         logout,
         fetchTransactions,
         updateProfileImage,
-        addMoney: (amount, pin, source) => runTransaction("/api/wallet/add-money", { amount, pin, source }),
-        cashOut: (amount, pin, agentPhone) => runTransaction("/api/wallet/cashout", { amount, pin, agentPhone }),
-        transfer: (amount, pin, receiverPhone) => runTransaction("/api/wallet/transfer", { amount, pin, receiverPhone }),
-        payBill: (amount, pin, billerName, subscriberId) => runTransaction("/api/wallet/pay-bill", { amount, pin, billerName, subscriberId }),
-        claimCoupon: (code) => runTransaction("/api/wallet/claim-coupon", { code }),
+        addMoney: (amount, pin, source) =>
+          runTransaction("/api/wallet/add-money", { amount, pin, source }),
+        cashOut: (amount, pin, agentPhone) =>
+          runTransaction("/api/wallet/cashout", { amount, pin, agentPhone }),
+        transfer: (amount, pin, receiverPhone) =>
+          runTransaction("/api/wallet/transfer", {
+            amount,
+            pin,
+            receiverPhone,
+          }),
+        payBill: (amount, pin, billerName, subscriberId) =>
+          runTransaction("/api/wallet/pay-bill", {
+            amount,
+            pin,
+            billerName,
+            subscriberId,
+          }),
+        claimCoupon: (code) =>
+          runTransaction("/api/wallet/claim-coupon", { code }),
       }}
     >
       {children}

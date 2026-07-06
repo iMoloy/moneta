@@ -5,9 +5,20 @@ import { getMongoClient } from "./db.js";
 const client = await getMongoClient();
 const db = client.db();
 
+const trustedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://moneta-client.vercel.app",
+  "https://moneta.vercel.app",
+  ...(process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+].filter((origin, index, array) => array.indexOf(origin) === index);
+
 export const auth = betterAuth({
   database: mongodbAdapter(db),
-  trustedOrigins: [process.env.CLIENT_URL || "http://localhost:3000"],
+  trustedOrigins,
   emailAndPassword: {
     enabled: true,
   },

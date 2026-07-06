@@ -11,13 +11,23 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const clientOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://moneta-client.vercel.app",
+  "https://moneta.vercel.app",
+  ...(process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+].filter((origin, index, array) => array.indexOf(origin) === index);
 
 // Enable CORS with support for credentials (required for cookies-based auth sessions)
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: clientOrigins,
     credentials: true,
-  })
+  }),
 );
 
 // Better Auth routes handler
@@ -29,7 +39,11 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // Wallet API Routes
 app.use("/api/wallet", walletRouter);
 
-// Basic sanity check route
+// Basic sanity check routes
+app.get("/", (req, res) => {
+  res.json({ status: "ok", message: "Moneta Server is running" });
+});
+
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Moneta Server is running" });
 });
@@ -45,8 +59,10 @@ if (mongoUri) {
   console.warn("WARNING: MONGODB_URI is not set in environment variables!");
 }
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+  });
+}
 
 export default app;
