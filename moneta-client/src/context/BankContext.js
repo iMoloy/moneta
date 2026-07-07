@@ -32,6 +32,8 @@ const hashPinSHA256 = async (pin) => {
 export const BankProvider = ({ children }) => {
   const router = useRouter();
   const [transactions, setTransactions] = useState([]);
+  const [billers, setBillers] = useState([]);
+  const [depositSources, setDepositSources] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Fetch session reactively using Better Auth Hook
@@ -238,10 +240,34 @@ export const BankProvider = ({ children }) => {
     }
   };
 
-  // Sync transaction logs on user change
+  // Load active utility billers
+  const fetchBillers = async () => {
+    if (!user) return;
+    try {
+      const data = await apiFetch("/api/wallet/billers", { method: "GET" });
+      setBillers(data.billers || []);
+    } catch (err) {
+      console.error("Failed to load billers:", err.message);
+    }
+  };
+
+  // Load active deposit sources
+  const fetchDepositSources = async () => {
+    if (!user) return;
+    try {
+      const data = await apiFetch("/api/wallet/deposit-sources", { method: "GET" });
+      setDepositSources(data.depositSources || []);
+    } catch (err) {
+      console.error("Failed to load deposit sources:", err.message);
+    }
+  };
+
+  // Sync transaction logs and static data on user change
   useEffect(() => {
     if (user) {
       fetchTransactions();
+      fetchBillers();
+      fetchDepositSources();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -251,6 +277,8 @@ export const BankProvider = ({ children }) => {
       value={{
         user,
         transactions,
+        billers,
+        depositSources,
         loading: loading || authLoading,
         login,
         register,

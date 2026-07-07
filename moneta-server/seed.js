@@ -4,6 +4,8 @@ import { connectDB } from "./db.js";
 import { auth } from "./auth.js";
 import Coupon from "./models/Coupon.js";
 import User from "./models/User.js";
+import Biller from "./models/Biller.js";
+import DepositSource from "./models/DepositSource.js";
 
 // Load configs
 dotenv.config();
@@ -59,6 +61,42 @@ const seed = async () => {
         console.log(`- Coupon created: ${cp.code} ($${cp.bonusAmount} reward)`);
       } else {
         console.log(`- Coupon ${cp.code} already exists.`);
+      }
+    }
+
+    // Seed default Billers
+    console.log("Seeding default billers...");
+    const billers = [
+      { name: "DESCO Electricity", category: "utility" },
+      { name: "Dhaka WASA Water", category: "utility" },
+      { name: "Karnaphuli Gas", category: "utility" },
+      { name: "Link3 Internet", category: "utility" },
+    ];
+    for (const b of billers) {
+      const exists = await Biller.findOne({ name: b.name });
+      if (!exists) {
+        await Biller.create(b);
+        console.log(`- Biller created: ${b.name}`);
+      } else {
+        console.log(`- Biller ${b.name} already exists.`);
+      }
+    }
+
+    // Seed default Deposit Sources
+    console.log("Seeding default deposit sources...");
+    const depositSources = [
+      { name: "Visa Debit Card", type: "card", details: "*4221" },
+      { name: "Mastercard Gold", type: "card", details: "*8890" },
+      { name: "City Bank Account", type: "bank", details: "" },
+      { name: "BRAC Bank Account", type: "bank", details: "" },
+    ];
+    for (const ds of depositSources) {
+      const exists = await DepositSource.findOne({ name: ds.name });
+      if (!exists) {
+        await DepositSource.create(ds);
+        console.log(`- Deposit Source created: ${ds.name}`);
+      } else {
+        console.log(`- Deposit Source ${ds.name} already exists.`);
       }
     }
 

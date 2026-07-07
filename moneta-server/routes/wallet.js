@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import User from "../models/User.js";
 import Transaction from "../models/Transaction.js";
 import Coupon from "../models/Coupon.js";
+import Biller from "../models/Biller.js";
+import DepositSource from "../models/DepositSource.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -470,6 +472,34 @@ router.post("/profile-image", async (req, res) => {
   } catch (error) {
     console.error("Update profile image error:", error.message);
     res.status(500).json({ error: "Failed to update profile image." });
+  }
+});
+
+/**
+ * @route   GET /api/wallet/billers
+ * @desc    Get active utility billers list
+ */
+router.get("/billers", async (req, res) => {
+  try {
+    const activeBillers = await Biller.find({ isActive: true }).sort({ name: 1 });
+    res.json({ billers: activeBillers });
+  } catch (error) {
+    console.error("Fetch billers error:", error.message);
+    res.status(500).json({ error: "Failed to retrieve billers list." });
+  }
+});
+
+/**
+ * @route   GET /api/wallet/deposit-sources
+ * @desc    Get active deposit sources list (cards/banks)
+ */
+router.get("/deposit-sources", async (req, res) => {
+  try {
+    const activeSources = await DepositSource.find({ isActive: true }).sort({ name: 1 });
+    res.json({ depositSources: activeSources });
+  } catch (error) {
+    console.error("Fetch deposit sources error:", error.message);
+    res.status(500).json({ error: "Failed to retrieve deposit sources list." });
   }
 });
 

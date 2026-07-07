@@ -11,6 +11,8 @@ export default function Dashboard() {
   const {
     user,
     transactions,
+    billers,
+    depositSources,
     loading,
     logout,
     addMoney,
@@ -49,8 +51,8 @@ export default function Dashboard() {
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState("");
   const [targetAccount, setTargetAccount] = useState("");
-  const [source, setSource] = useState("Visa Card");
-  const [biller, setBiller] = useState("DESCO Electricity");
+  const [source, setSource] = useState("");
+  const [biller, setBiller] = useState("");
   const [couponCode, setCouponCode] = useState("");
   
   // Filtering & search
@@ -58,6 +60,18 @@ export default function Dashboard() {
   const [txTypeFilter, setTxTypeFilter] = useState("all");
 
   const [formErrors, setFormErrors] = useState({});
+
+  useEffect(() => {
+    if (depositSources.length > 0 && !source) {
+      setSource(depositSources[0].name);
+    }
+  }, [depositSources, source]);
+
+  useEffect(() => {
+    if (billers.length > 0 && !biller) {
+      setBiller(billers[0].name);
+    }
+  }, [billers, biller]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -557,10 +571,11 @@ export default function Dashboard() {
                   onChange={(e) => setSource(e.target.value)}
                   className="select select-bordered w-full rounded-2xl bg-[#131622] border border-white/[0.08] h-12 px-4.5 font-bold text-xs text-white focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
                 >
-                  <option value="Visa Card">Visa Debit Card (*4221)</option>
-                  <option value="Mastercard">Mastercard Gold (*8890)</option>
-                  <option value="City Bank">City Bank Account</option>
-                  <option value="BRAC Bank">BRAC Bank Account</option>
+                  {depositSources.map((ds) => (
+                    <option key={ds._id} value={ds.name}>
+                      {ds.name} {ds.details ? `(${ds.details})` : ""}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -575,10 +590,11 @@ export default function Dashboard() {
                   onChange={(e) => setBiller(e.target.value)}
                   className="select select-bordered w-full rounded-2xl bg-[#131622] border border-white/[0.08] h-12 px-4.5 font-bold text-xs text-white focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
                 >
-                  <option value="DESCO Electricity">DESCO Electricity</option>
-                  <option value="Dhaka WASA Water">Dhaka WASA Water</option>
-                  <option value="Karnaphuli Gas">Karnaphuli Gas</option>
-                  <option value="Link3 Internet">Link3 Internet</option>
+                  {billers.map((b) => (
+                    <option key={b._id} value={b.name}>
+                      {b.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
