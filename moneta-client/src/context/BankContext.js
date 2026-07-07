@@ -14,6 +14,9 @@ const defaultServerUrl =
 // Initialize Better Auth Client pointing to Express Server
 export const authClient = createAuthClient({
   baseURL: defaultServerUrl,
+  fetchOptions: {
+    credentials: "include",
+  },
 });
 
 export const BankContext = createContext();
