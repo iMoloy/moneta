@@ -1,5 +1,4 @@
 import express from "express";
-import mongoose from "mongoose";
 import User from "../models/User.js";
 import Transaction from "../models/Transaction.js";
 import Coupon from "../models/Coupon.js";
@@ -30,56 +29,39 @@ router.post("/add-money", async (req, res) => {
     if (isNaN(val) || val <= 0) {
       return res.status(400).json({ error: "Invalid amount. Must be greater than 0." });
     }
-
     if (!pin) {
       return res.status(400).json({ error: "Security PIN is required." });
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const user = await User.findById(req.user.id).session(session);
-      if (!user) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "User not found." });
-      }
-
-      if (!verifyPin(pin, user.pin)) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(401).json({ error: "Incorrect security PIN." });
-      }
-
-      // Increment balance
-      user.balance += val;
-      await user.save({ session });
-
-      // Log transaction
-      const tx = new Transaction({
-        userId: user._id,
-        title: `Deposit from ${source || "Bank/Card"}`,
-        amount: val,
-        type: "credit",
-        category: "add",
-        counterParty: source || "External Source",
-      });
-      await tx.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      res.json({
-        message: "Money added successfully.",
-        balance: user.balance,
-        transaction: tx,
-      });
-    } catch (transactionError) {
-      await session.abortTransaction();
-      session.endSession();
-      throw transactionError;
+    // Fetch user to verify PIN
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found." });
+    if (!verifyPin(pin, user.pin)) {
+      return res.status(401).json({ error: "Incorrect security PIN." });
     }
+
+    // Atomic balance increment
+    const updated = await User.findByIdAndUpdate(
+      req.user.id,
+      { $inc: { balance: val } },
+      { new: true }
+    );
+
+    // Log transaction
+    const tx = await Transaction.create({
+      userId: user._id,
+      title: `Deposit from ${source || "Bank/Card"}`,
+      amount: val,
+      type: "credit",
+      category: "add",
+      counterParty: source || "External Source",
+    });
+
+    res.json({
+      message: "Money added successfully.",
+      balance: updated.balance,
+      transaction: tx,
+    });
   } catch (error) {
     console.error("Add money error:", error.message);
     res.status(500).json({ error: "Failed to process transaction." });
@@ -98,66 +80,44 @@ router.post("/cashout", async (req, res) => {
     if (isNaN(val) || val <= 0) {
       return res.status(400).json({ error: "Invalid amount. Must be greater than 0." });
     }
-
     if (!agentPhone) {
       return res.status(400).json({ error: "Agent mobile number is required." });
     }
 
-    const fee = val * 0.0185;
+    const fee = parseFloat((val * 0.0185).toFixed(2));
     const totalDeduction = val + fee;
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const user = await User.findById(req.user.id).session(session);
-      if (!user) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "User not found." });
-      }
-
-      if (!verifyPin(pin, user.pin)) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(401).json({ error: "Incorrect security PIN." });
-      }
-
-      if (user.balance < totalDeduction) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: "Insufficient balance to cover withdrawal and fee." });
-      }
-
-      // Deduct balance
-      user.balance -= totalDeduction;
-      await user.save({ session });
-
-      // Log transaction
-      const tx = new Transaction({
-        userId: user._id,
-        title: "Cash Out Withdrawal",
-        amount: val, // Log base amount withdrawn
-        type: "debit",
-        category: "cashout",
-        counterParty: agentPhone,
-      });
-      await tx.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      res.json({
-        message: "Cash out withdrawal successful.",
-        balance: user.balance,
-        fee,
-        transaction: tx,
-      });
-    } catch (transactionError) {
-      await session.abortTransaction();
-      session.endSession();
-      throw transactionError;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found." });
+    if (!verifyPin(pin, user.pin)) {
+      return res.status(401).json({ error: "Incorrect security PIN." });
     }
+    if (user.balance < totalDeduction) {
+      return res.status(400).json({ error: "Insufficient balance to cover withdrawal and fee." });
+    }
+
+    // Atomic balance deduction
+    const updated = await User.findByIdAndUpdate(
+      req.user.id,
+      { $inc: { balance: -totalDeduction } },
+      { new: true }
+    );
+
+    const tx = await Transaction.create({
+      userId: user._id,
+      title: "Cash Out Withdrawal",
+      amount: val,
+      type: "debit",
+      category: "cashout",
+      counterParty: agentPhone,
+    });
+
+    res.json({
+      message: "Cash out withdrawal successful.",
+      balance: updated.balance,
+      fee,
+      transaction: tx,
+    });
   } catch (error) {
     console.error("Cash out error:", error.message);
     res.status(500).json({ error: "Failed to process withdrawal." });
@@ -176,87 +136,58 @@ router.post("/transfer", async (req, res) => {
     if (isNaN(val) || val <= 0) {
       return res.status(400).json({ error: "Invalid amount. Must be greater than 0." });
     }
-
     if (!receiverPhone) {
       return res.status(400).json({ error: "Recipient phone number is required." });
     }
 
-    if (receiverPhone === req.user.phone) {
-      return res.status(400).json({ error: "Cannot transfer money to yourself." });
+    const sender = await User.findById(req.user.id);
+    if (!sender) return res.status(404).json({ error: "Sender not found." });
+    if (!verifyPin(pin, sender.pin)) {
+      return res.status(401).json({ error: "Incorrect security PIN." });
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    if (receiverPhone === sender.phone) {
+      return res.status(400).json({ error: "Cannot transfer money to yourself." });
+    }
+    if (sender.balance < val) {
+      return res.status(400).json({ error: "Insufficient balance." });
+    }
 
-    try {
-      const sender = await User.findById(req.user.id).session(session);
-      if (!sender) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "Sender not found." });
-      }
+    const receiver = await User.findOne({ phone: receiverPhone });
+    if (!receiver) {
+      return res.status(404).json({ error: "Recipient number not registered on Moneta." });
+    }
 
-      if (!verifyPin(pin, sender.pin)) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(401).json({ error: "Incorrect security PIN." });
-      }
+    // Atomic updates using $inc on both users
+    const [updatedSender] = await Promise.all([
+      User.findByIdAndUpdate(sender._id, { $inc: { balance: -val } }, { new: true }),
+      User.findByIdAndUpdate(receiver._id, { $inc: { balance: val } }, { new: true }),
+    ]);
 
-      if (sender.balance < val) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: "Insufficient balance." });
-      }
-
-      // Find receiver
-      const receiver = await User.findOne({ phone: receiverPhone }).session(session);
-      if (!receiver) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "Recipient number not registered on Moneta." });
-      }
-
-      // Atomic updates
-      sender.balance -= val;
-      receiver.balance += val;
-      await sender.save({ session });
-      await receiver.save({ session });
-
-      // Log sender's transaction
-      const senderTx = new Transaction({
+    // Log both transactions
+    await Promise.all([
+      Transaction.create({
         userId: sender._id,
         title: `Transfer to ${receiver.name}`,
         amount: val,
         type: "debit",
         category: "transfer",
         counterParty: receiver.phone,
-      });
-      await senderTx.save({ session });
-
-      // Log receiver's transaction
-      const receiverTx = new Transaction({
+      }),
+      Transaction.create({
         userId: receiver._id,
         title: `Received from ${sender.name}`,
         amount: val,
         type: "credit",
         category: "transfer",
         counterParty: sender.phone,
-      });
-      await receiverTx.save({ session });
+      }),
+    ]);
 
-      await session.commitTransaction();
-      session.endSession();
-
-      res.json({
-        message: "Transfer successful.",
-        balance: sender.balance,
-        transaction: senderTx,
-      });
-    } catch (transactionError) {
-      await session.abortTransaction();
-      session.endSession();
-      throw transactionError; // Pass to outer catch block
-    }
+    res.json({
+      message: "Transfer successful.",
+      balance: updatedSender.balance,
+    });
   } catch (error) {
     console.error("Transfer error:", error.message);
     res.status(500).json({ error: "Failed to process transfer." });
@@ -275,62 +206,39 @@ router.post("/pay-bill", async (req, res) => {
     if (isNaN(val) || val <= 0) {
       return res.status(400).json({ error: "Invalid amount. Must be greater than 0." });
     }
-
     if (!billerName || !subscriberId) {
       return res.status(400).json({ error: "Biller name and subscriber ID are required." });
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const user = await User.findById(req.user.id).session(session);
-      if (!user) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "User not found." });
-      }
-
-      if (!verifyPin(pin, user.pin)) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(401).json({ error: "Incorrect security PIN." });
-      }
-
-      if (user.balance < val) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: "Insufficient balance." });
-      }
-
-      // Deduct balance
-      user.balance -= val;
-      await user.save({ session });
-
-      // Log transaction
-      const tx = new Transaction({
-        userId: user._id,
-        title: `Utility Bill (${billerName})`,
-        amount: val,
-        type: "debit",
-        category: "bill",
-        counterParty: `${billerName} - Sub ID: ${subscriberId}`,
-      });
-      await tx.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      res.json({
-        message: "Bill payment successful.",
-        balance: user.balance,
-        transaction: tx,
-      });
-    } catch (transactionError) {
-      await session.abortTransaction();
-      session.endSession();
-      throw transactionError;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found." });
+    if (!verifyPin(pin, user.pin)) {
+      return res.status(401).json({ error: "Incorrect security PIN." });
     }
+    if (user.balance < val) {
+      return res.status(400).json({ error: "Insufficient balance." });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      req.user.id,
+      { $inc: { balance: -val } },
+      { new: true }
+    );
+
+    const tx = await Transaction.create({
+      userId: user._id,
+      title: `Utility Bill (${billerName})`,
+      amount: val,
+      type: "debit",
+      category: "bill",
+      counterParty: `${billerName} - Sub ID: ${subscriberId}`,
+    });
+
+    res.json({
+      message: "Bill payment successful.",
+      balance: updated.balance,
+      transaction: tx,
+    });
   } catch (error) {
     console.error("Pay bill error:", error.message);
     res.status(500).json({ error: "Failed to pay bill." });
@@ -349,64 +257,39 @@ router.post("/claim-coupon", async (req, res) => {
       return res.status(400).json({ error: "Promo coupon code is required." });
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true }).session(session);
-      if (!coupon) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "Invalid or expired promo code." });
-      }
-
-      // Check if user has already claimed this coupon
-      const hasClaimed = coupon.claimedBy.includes(req.user.id);
-      if (hasClaimed) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(400).json({ error: "You have already claimed this promo code." });
-      }
-
-      const user = await User.findById(req.user.id).session(session);
-      if (!user) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(404).json({ error: "User not found." });
-      }
-
-      // Apply reward
-      user.balance += coupon.bonusAmount;
-      await user.save({ session });
-
-      // Log coupon claim
-      coupon.claimedBy.push(user._id);
-      await coupon.save({ session });
-
-      // Log transaction
-      const tx = new Transaction({
-        userId: user._id,
-        title: `Promo Reward (${coupon.code})`,
-        amount: coupon.bonusAmount,
-        type: "credit",
-        category: "bonus",
-        counterParty: "System Promo",
-      });
-      await tx.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      res.json({
-        message: `Successfully redeemed coupon! Bonus of $${coupon.bonusAmount} added to balance.`,
-        balance: user.balance,
-        transaction: tx,
-      });
-    } catch (transactionError) {
-      await session.abortTransaction();
-      session.endSession();
-      throw transactionError;
+    const coupon = await Coupon.findOne({ code: code.toUpperCase(), isActive: true });
+    if (!coupon) {
+      return res.status(404).json({ error: "Invalid or expired promo code." });
     }
+
+    const hasClaimed = coupon.claimedBy.some((id) => id.toString() === req.user.id.toString());
+    if (hasClaimed) {
+      return res.status(400).json({ error: "You have already claimed this promo code." });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    // Apply reward and mark coupon claimed
+    const [updated] = await Promise.all([
+      User.findByIdAndUpdate(req.user.id, { $inc: { balance: coupon.bonusAmount } }, { new: true }),
+      Coupon.findByIdAndUpdate(coupon._id, { $push: { claimedBy: user._id } }),
+    ]);
+
+    const tx = await Transaction.create({
+      userId: user._id,
+      title: `Promo Reward (${coupon.code})`,
+      amount: coupon.bonusAmount,
+      type: "credit",
+      category: "bonus",
+      counterParty: "System Promo",
+    });
+
+    res.json({
+      message: `Successfully redeemed coupon! Bonus of $${coupon.bonusAmount} added to balance.`,
+      balance: updated.balance,
+      transaction: tx,
+    });
   } catch (error) {
     console.error("Claim coupon error:", error.message);
     res.status(500).json({ error: "Failed to redeem coupon." });
@@ -428,7 +311,6 @@ router.get("/transactions", async (req, res) => {
     }
 
     if (search) {
-      // Allow searching by transaction title or counterparty name
       filter.$or = [
         { title: { $regex: search, $options: "i" } },
         { counterParty: { $regex: search, $options: "i" } },
