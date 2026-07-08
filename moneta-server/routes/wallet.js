@@ -44,7 +44,7 @@ router.post("/add-money", async (req, res) => {
     const updated = await User.findByIdAndUpdate(
       req.user.id,
       { $inc: { balance: val } },
-      { new: true }
+      { new: true, runValidators: false }
     );
 
     // Log transaction
@@ -100,7 +100,7 @@ router.post("/cashout", async (req, res) => {
     const updated = await User.findByIdAndUpdate(
       req.user.id,
       { $inc: { balance: -totalDeduction } },
-      { new: true }
+      { new: true, runValidators: false }
     );
 
     const tx = await Transaction.create({
@@ -160,8 +160,8 @@ router.post("/transfer", async (req, res) => {
 
     // Atomic updates using $inc on both users
     const [updatedSender] = await Promise.all([
-      User.findByIdAndUpdate(sender._id, { $inc: { balance: -val } }, { new: true }),
-      User.findByIdAndUpdate(receiver._id, { $inc: { balance: val } }, { new: true }),
+      User.findByIdAndUpdate(sender._id, { $inc: { balance: -val } }, { new: true, runValidators: false }),
+      User.findByIdAndUpdate(receiver._id, { $inc: { balance: val } }, { new: true, runValidators: false }),
     ]);
 
     // Log both transactions
@@ -222,7 +222,7 @@ router.post("/pay-bill", async (req, res) => {
     const updated = await User.findByIdAndUpdate(
       req.user.id,
       { $inc: { balance: -val } },
-      { new: true }
+      { new: true, runValidators: false }
     );
 
     const tx = await Transaction.create({
@@ -272,7 +272,7 @@ router.post("/claim-coupon", async (req, res) => {
 
     // Apply reward and mark coupon claimed
     const [updated] = await Promise.all([
-      User.findByIdAndUpdate(req.user.id, { $inc: { balance: coupon.bonusAmount } }, { new: true }),
+      User.findByIdAndUpdate(req.user.id, { $inc: { balance: coupon.bonusAmount } }, { new: true, runValidators: false }),
       Coupon.findByIdAndUpdate(coupon._id, { $push: { claimedBy: user._id } }),
     ]);
 
