@@ -13,6 +13,7 @@ export default function Dashboard() {
     transactions,
     billers,
     depositSources,
+    cards,
     loading,
     logout,
     addMoney,
@@ -21,11 +22,14 @@ export default function Dashboard() {
     payBill,
     claimCoupon,
     updateProfileImage,
+    addCard,
+    deleteCard,
+    setDefaultCard,
   } = useContext(BankContext);
 
   const router = useRouter();
 
-  // View states: home, history, profile, add, cash, send, bill, bonus
+  // View states: home, history, profile, add, cash, send, bill, bonus, cards, addcard
   const [view, setView] = useState("home");
 
   const handleImageUpload = async (e) => {
@@ -54,6 +58,12 @@ export default function Dashboard() {
   const [source, setSource] = useState("");
   const [biller, setBiller] = useState("");
   const [couponCode, setCouponCode] = useState("");
+
+  // Card form inputs
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardHolder, setCardHolder] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardBrand, setCardBrand] = useState("Other");
   
   // Filtering & search
   const [txSearch, setTxSearch] = useState("");
@@ -95,6 +105,10 @@ export default function Dashboard() {
     setTargetAccount("");
     setCouponCode("");
     setFormErrors({});
+    setCardNumber("");
+    setCardHolder("");
+    setCardExpiry("");
+    setCardBrand("Other");
     setView("home");
   };
 
@@ -168,6 +182,65 @@ export default function Dashboard() {
 
     if (success) {
       resetForm();
+    }
+  };
+
+  // Auto-detect card brand from number prefix
+  const detectBrand = (num) => {
+    const n = num.replace(/\s/g, "");
+    if (/^4/.test(n)) return "Visa";
+    if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return "Mastercard";
+    if (/^3[47]/.test(n)) return "Amex";
+    return "Other";
+  };
+
+  // Format card number as groups of 4 (e.g. 1234 5678 9012 3456)
+  const handleCardNumberChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+    const formatted = raw.match(/.{1,4}/g)?.join(" ") || raw;
+    setCardNumber(formatted);
+    setCardBrand(detectBrand(raw));
+  };
+
+  // Format expiry as MM/YY
+  const handleExpiryChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 4);
+    if (raw.length >= 3) {
+      setCardExpiry(raw.slice(0, 2) + "/" + raw.slice(2));
+    } else {
+      setCardExpiry(raw);
+    }
+  };
+
+  const handleAddCard = async () => {
+    const errors = {};
+    const rawNum = cardNumber.replace(/\s/g, "");
+    const [mm, yy] = cardExpiry.split("/");
+    const expMonth = parseInt(mm);
+    const expYear = yy ? 2000 + parseInt(yy) : NaN;
+
+    if (rawNum.length < 16) errors.cardNumber = "Enter a valid 16-digit card number.";
+    if (!cardHolder.trim()) errors.cardHolder = "Cardholder name is required.";
+    if (!mm || !yy || isNaN(expMonth) || isNaN(expYear) || expMonth < 1 || expMonth > 12) {
+      errors.cardExpiry = "Enter a valid expiry date (MM/YY).";
+    }
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    const success = await addCard({
+      cardholderName: cardHolder,
+      cardNumber,
+      expMonth,
+      expYear,
+      brand: cardBrand,
+    });
+    if (success) {
+      setCardNumber("");
+      setCardHolder("");
+      setCardExpiry("");
+      setCardBrand("Other");
+      setFormErrors({});
+      setView("cards");
     }
   };
 
@@ -302,11 +375,12 @@ export default function Dashboard() {
               {/* Mini ATM-card style service buttons — 3 col, compact */}
               <div className="grid grid-cols-3 gap-2.5">
                 {[
-                  { id: "add",     label: "Add Money",  icon: "fa-circle-plus",           glow: "bg-indigo-500/30",  iconColor: "text-indigo-300" },
+                                  { id: "add",     label: "Add Money",  icon: "fa-circle-plus",           glow: "bg-indigo-500/30",  iconColor: "text-indigo-300" },
                   { id: "cash",    label: "Cash Out",   icon: "fa-arrow-up-from-bracket",  glow: "bg-emerald-500/30", iconColor: "text-emerald-300" },
                   { id: "send",    label: "Send Money", icon: "fa-paper-plane",            glow: "bg-amber-500/30",   iconColor: "text-amber-300" },
                   { id: "bill",    label: "Pay Bill",   icon: "fa-file-invoice-dollar",    glow: "bg-cyan-500/30",    iconColor: "text-cyan-300" },
                   { id: "bonus",   label: "Promo Code", icon: "fa-gift",                   glow: "bg-rose-500/30",    iconColor: "text-rose-300" },
+                  { id: "cards",   label: "My Cards",   icon: "fa-credit-card",            glow: "bg-violet-500/30",  iconColor: "text-violet-300" },
                   { id: "history", label: "History",    icon: "fa-clock-rotate-left",      glow: "bg-purple-500/30",  iconColor: "text-purple-300" },
                 ].map((srv) => (
                   <button
@@ -519,12 +593,132 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+        {/* Cards View */}
+        {view === "cards" && (
+          <div className="animate-in fade-in duration-300">
+            <div className="flex justify-between items-center mb-4 pl-1">
+              <h3 className="text-lg font-black text-indigo-600 tracking-tight">My Cards</h3>
+              <button
+                onClick={() => { setFormErrors({}); setView("addcard"); }}
+                disabled={cards.length >= 5}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+              >
+                <i className="fa-solid fa-plus text-[9px]" />
+                Add Card
+              </button>
+            </div>
+
+            {cards.length === 0 ? (
+              <div className="bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-10 text-center rounded-[2.5rem] border border-white/5 shadow-md flex flex-col items-center gap-3">
+                <i className="fa-regular fa-credit-card text-3xl text-indigo-400/40" />
+                <p className="text-indigo-200/50 font-bold text-xs">No cards saved yet.</p>
+                <button
+                  onClick={() => setView("addcard")}
+                  className="mt-1 px-4 py-2 rounded-xl bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Add Your First Card
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {cards.map((card) => (
+                  <div key={card._id} className={`relative overflow-hidden rounded-[1.8rem] p-5 flex flex-col gap-3.5 shadow-xl border transition-all duration-200 ${
+                    card.isDefault
+                      ? "bg-gradient-to-br from-indigo-900 via-slate-900 to-violet-950 border-indigo-500/40 shadow-indigo-500/10"
+                      : "bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 border-white/5"
+                  }`}>
+                    {/* Glow blobs */}
+                    <div className="absolute -top-6 -right-6 w-28 h-28 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                    {/* Top row: brand + default badge */}
+                    <div className="flex justify-between items-center relative z-10">
+                      <div className="flex items-center gap-2">
+                        {card.brand === "Visa" && (
+                          <span className="text-white font-black italic text-base tracking-tight leading-none">VISA</span>
+                        )}
+                        {card.brand === "Mastercard" && (
+                          <div className="flex items-center">
+                            <div className="w-5 h-5 rounded-full bg-red-500/80" />
+                            <div className="w-5 h-5 rounded-full bg-amber-400/80 -ml-2.5" />
+                          </div>
+                        )}
+                        {card.brand === "Amex" && (
+                          <span className="text-cyan-300 font-black text-[11px] tracking-widest">AMEX</span>
+                        )}
+                        {card.brand === "Other" && (
+                          <i className="fa-solid fa-credit-card text-indigo-300/60 text-base" />
+                        )}
+                      </div>
+                      {card.isDefault && (
+                        <span className="text-[8px] font-black uppercase tracking-widest bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 px-2 py-0.5 rounded-full">
+                          Default
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Card number */}
+                    <p className="text-white font-mono text-sm font-bold tracking-[0.2em] relative z-10">
+                      •••• •••• •••• {card.last4}
+                    </p>
+
+                    {/* Bottom row: name + expiry */}
+                    <div className="flex justify-between items-end relative z-10">
+                      <div>
+                        <p className="text-[7px] text-indigo-200/40 font-black uppercase tracking-widest">Card Holder</p>
+                        <p className="text-xs text-white font-bold mt-0.5 truncate max-w-[140px]">{card.cardholderName}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[7px] text-indigo-200/40 font-black uppercase tracking-widest">Expires</p>
+                        <p className="text-xs text-white font-bold mt-0.5">
+                          {String(card.expMonth).padStart(2, "0")}/{String(card.expYear).slice(-2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2 relative z-10 pt-1 border-t border-white/5">
+                      {!card.isDefault && (
+                        <button
+                          onClick={() => setDefaultCard(card._id)}
+                          disabled={loading}
+                          className="flex-1 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-400/20 text-indigo-300 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                          Set Default
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteCard(card._id)}
+                        disabled={loading}
+                        className="flex-1 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-400/15 text-rose-400 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        <i className="fa-solid fa-trash-can mr-1 text-[8px]" />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {cards.length < 5 && (
+                  <button
+                    onClick={() => setView("addcard")}
+                    className="w-full py-4 rounded-[1.8rem] border border-dashed border-white/10 hover:border-indigo-500/40 hover:bg-indigo-500/5 text-indigo-400/50 hover:text-indigo-400 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <i className="fa-solid fa-plus" />
+                    Add Another Card ({cards.length}/5)
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* 7. Slide-Up Drawer Sheet Panel */}
       <div
         className={`absolute inset-0 bg-slate-950/40 backdrop-blur-sm z-50 transition-opacity duration-300 ${
-          ["add", "cash", "send", "bill", "bonus"].includes(view)
+          ["add", "cash", "send", "bill", "bonus", "addcard"].includes(view)
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
         }`}
@@ -533,7 +727,7 @@ export default function Dashboard() {
         {/* Sliding Panel Sheet */}
         <div
           className={`absolute bottom-0 left-0 right-0 bg-[#0C0D14]/98 backdrop-blur-2xl rounded-t-[2.2rem] shadow-2xl p-7 pt-5 transition-transform duration-300 transform z-50 flex flex-col max-h-[80%] border-t border-white/[0.08] ${
-            ["add", "cash", "send", "bill", "bonus"].includes(view)
+            ["add", "cash", "send", "bill", "bonus", "addcard"].includes(view)
               ? "translate-y-0"
               : "translate-y-full"
           }`}
@@ -554,7 +748,8 @@ export default function Dashboard() {
               {view === "add" ? "Deposit Money" :
                view === "cash" ? "Withdrawal" :
                view === "send" ? "Transfer Out" :
-               view === "bill" ? "Pay Utilities" : "Enter Coupon"}
+               view === "bill" ? "Pay Utilities" :
+               view === "addcard" ? "Add New Card" : "Enter Coupon"}
             </h3>
             <div className="w-8"></div>
           </div>
@@ -656,14 +851,114 @@ export default function Dashboard() {
               />
             )}
 
-            <div className="mt-6.5">
-              <ActionButton 
-                onClick={() => handleWalletAction(view)}
-                loading={loading}
-              >
-                Confirm Transaction
-              </ActionButton>
-            </div>
+            {/* Add Card Form */}
+            {view === "addcard" && (
+              <div>
+                {/* Brand indicator pill */}
+                <div className="flex justify-end mb-3">
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                    cardBrand === "Visa" ? "bg-blue-500/10 border-blue-400/20 text-blue-300" :
+                    cardBrand === "Mastercard" ? "bg-red-500/10 border-red-400/20 text-red-300" :
+                    cardBrand === "Amex" ? "bg-cyan-500/10 border-cyan-400/20 text-cyan-300" :
+                    "bg-white/5 border-white/10 text-indigo-200/40"
+                  }`}>
+                    {cardBrand === "Other" ? "Card Brand" : cardBrand}
+                  </span>
+                </div>
+
+                {/* Card Number */}
+                <div className="form-control mb-4 w-full">
+                  <label className="label pb-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 pl-1">Card Number</span>
+                  </label>
+                  <div className={`relative w-full rounded-2xl border transition-all duration-300 ${
+                    formErrors.cardNumber
+                      ? "border-red-500/50 bg-red-950/10"
+                      : "border-white/[0.08] hover:border-white/20 bg-white/5"
+                  }`}>
+                    <i className="fa-solid fa-credit-card absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-sm" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="1234 5678 9012 3456"
+                      value={cardNumber}
+                      onChange={handleCardNumberChange}
+                      className="w-full bg-transparent h-12.5 text-sm focus:outline-none font-semibold text-white placeholder:text-white/30 pl-11 pr-4.5 tracking-widest"
+                    />
+                  </div>
+                  {formErrors.cardNumber && (
+                    <span className="text-[10px] text-red-500 mt-1 font-bold pl-2">
+                      <i className="fa-solid fa-circle-exclamation mr-1" />{formErrors.cardNumber}
+                    </span>
+                  )}
+                </div>
+
+                {/* Cardholder Name */}
+                <InputGroup
+                  label="Cardholder Name"
+                  type="text"
+                  placeholder="e.g. Moloy Krishna Paul"
+                  value={cardHolder}
+                  onChange={(e) => setCardHolder(e.target.value)}
+                  iconClass="fa-solid fa-user"
+                  error={formErrors.cardHolder}
+                  variant="dark"
+                />
+
+                {/* Expiry */}
+                <div className="form-control mb-4 w-full">
+                  <label className="label pb-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60 pl-1">Expiry Date</span>
+                  </label>
+                  <div className={`relative w-full rounded-2xl border transition-all duration-300 ${
+                    formErrors.cardExpiry
+                      ? "border-red-500/50 bg-red-950/10"
+                      : "border-white/[0.08] hover:border-white/20 bg-white/5"
+                  }`}>
+                    <i className="fa-solid fa-calendar absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-sm" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="MM/YY"
+                      value={cardExpiry}
+                      onChange={handleExpiryChange}
+                      maxLength={5}
+                      className="w-full bg-transparent h-12.5 text-sm focus:outline-none font-semibold text-white placeholder:text-white/30 pl-11 pr-4.5 tracking-widest"
+                    />
+                  </div>
+                  {formErrors.cardExpiry && (
+                    <span className="text-[10px] text-red-500 mt-1 font-bold pl-2">
+                      <i className="fa-solid fa-circle-exclamation mr-1" />{formErrors.cardExpiry}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-6.5">
+                  <button
+                    onClick={handleAddCard}
+                    disabled={loading}
+                    className="btn w-full rounded-2xl h-12.5 border-none text-white text-sm font-black tracking-wider uppercase shadow-lg shadow-indigo-500/10 bg-gradient-to-tr from-indigo-600 via-indigo-600 to-violet-600 hover:shadow-indigo-500/20 active:scale-[0.97] transition-all cursor-pointer flex items-center justify-center gap-2 select-none"
+                  >
+                    {loading ? (
+                      <><span className="loading loading-spinner loading-xs" />Saving...</>
+                    ) : (
+                      <><i className="fa-solid fa-lock text-xs" />Save Card Securely</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {view !== "addcard" && (
+              <div className="mt-6.5">
+                <ActionButton
+                  onClick={() => handleWalletAction(view)}
+                  loading={loading}
+                >
+                  Confirm Transaction
+                </ActionButton>
+              </div>
+            )}
           </div>
         </div>
       </div>

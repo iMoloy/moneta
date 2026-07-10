@@ -4,6 +4,7 @@ import Transaction from "../models/Transaction.js";
 import Coupon from "../models/Coupon.js";
 import Biller from "../models/Biller.js";
 import DepositSource from "../models/DepositSource.js";
+import Card from "../models/Card.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -382,6 +383,110 @@ router.get("/deposit-sources", async (req, res) => {
   } catch (error) {
     console.error("Fetch deposit sources error:", error.message);
     res.status(500).json({ error: "Failed to retrieve deposit sources list." });
+  }
+});
+
+/**
+ * @route   GET /api/wallet/cards
+ * @desc    Get all saved cards for the authenticated user
+ */
+router.get("/cards", async (req, res) => {
+  try {
+    const cards = await Card.find({ userId: req.user.id }).sort({ isDefault: -1, createdAt: -1 });
+    res.json({ cards });
+  } catch (error) {
+    console.error("Fetch cards error:", error.message);
+    res.status(500).json({ error: "Failed to retrieve cards." });
+  }
+});
+
+/**
+ * @route   POST /api/wallet/cards
+ * @desc    Save a new card (max 5 per user, stores last 4 digits only)
+ */
+router.post("/cards", async (req, res) => {
+  const { cardholderName, last4, brand, expMonth, expYear } = req.body;
+
+  // Basic validation
+  if (!cardholderName || !last4 || !expMonth || !expYear) {
+    return res.status(400).json({ error: "All card fields are required." });
+  }
+  if (!/^\d{4}$/.test(last4)) {
+    return res.status(400).json({ error: "last4 must be exactly 4 digits." });
+  }
+  const validBrands = ["Visa", "Mastercard", "Amex", "Other"];
+  const cardBrand = validBrands.includes(brand) ? brand : "Other";
+
+  try {
+    // Enforce 5-card limit
+    const count = await Card.countDocuments({ userId: req.user.id });
+    if (count >= 5) {
+      return res.status(400).json({ error: "Maximum of 5 cards allowed. Please remove an existing card first." });
+    }
+
+    // First card is always default
+    const isFirst = count === 0;
+
+    const card = await Card.create({
+      userId: req.user.id,
+      cardholderName: cardholderName.trim(),
+      last4,
+      brand: cardBrand,
+      expMonth: parseInt(expMonth),
+      expYear: parseInt(expYear),
+      isDefault: isFirst,
+    });
+
+    res.status(201).json({ message: "Card saved successfully.", card });
+  } catch (error) {
+    console.error("Add card error:", error.message);
+    res.status(500).json({ error: "Failed to save card." });
+  }
+});
+
+/**
+ * @route   PATCH /api/wallet/cards/:id/default
+ * @desc    Set a card as the default payment card
+ */
+router.patch("/cards/:id/default", async (req, res) => {
+  try {
+    const card = await Card.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!card) return res.status(404).json({ error: "Card not found." });
+
+    // Unset all other defaults first, then set this one
+    await Card.updateMany({ userId: req.user.id }, { $set: { isDefault: false } });
+    card.isDefault = true;
+    await card.save();
+
+    res.json({ message: "Default card updated.", card });
+  } catch (error) {
+    console.error("Set default card error:", error.message);
+    res.status(500).json({ error: "Failed to update default card." });
+  }
+});
+
+/**
+ * @route   DELETE /api/wallet/cards/:id
+ * @desc    Remove a saved card
+ */
+router.delete("/cards/:id", async (req, res) => {
+  try {
+    const card = await Card.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+    if (!card) return res.status(404).json({ error: "Card not found." });
+
+    // If deleted card was default, promote the newest remaining card
+    if (card.isDefault) {
+      const next = await Card.findOne({ userId: req.user.id }).sort({ createdAt: -1 });
+      if (next) {
+        next.isDefault = true;
+        await next.save();
+      }
+    }
+
+    res.json({ message: "Card removed successfully." });
+  } catch (error) {
+    console.error("Delete card error:", error.message);
+    res.status(500).json({ error: "Failed to remove card." });
   }
 });
 

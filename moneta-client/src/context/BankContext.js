@@ -34,6 +34,7 @@ export const BankProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [billers, setBillers] = useState([]);
   const [depositSources, setDepositSources] = useState([]);
+  const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Fetch session reactively using Better Auth Hook
@@ -262,12 +263,76 @@ export const BankProvider = ({ children }) => {
     }
   };
 
+  // Load user's saved cards
+  const fetchCards = async () => {
+    if (!user) return;
+    try {
+      const data = await apiFetch("/api/wallet/cards", { method: "GET" });
+      setCards(data.cards || []);
+    } catch (err) {
+      console.error("Failed to load cards:", err.message);
+    }
+  };
+
+  // Add a new card (receives full card number from UI, extracts last4 only)
+  const addCard = async ({ cardholderName, cardNumber, expMonth, expYear, brand }) => {
+    setLoading(true);
+    try {
+      const last4 = cardNumber.replace(/\s/g, "").slice(-4);
+      const data = await apiFetch("/api/wallet/cards", {
+        method: "POST",
+        body: JSON.stringify({ cardholderName, last4, brand, expMonth, expYear }),
+      });
+      toast.success(data.message || "Card saved successfully.");
+      await fetchCards();
+      return true;
+    } catch (err) {
+      toast.error(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete a saved card by ID
+  const deleteCard = async (cardId) => {
+    setLoading(true);
+    try {
+      const data = await apiFetch(`/api/wallet/cards/${cardId}`, { method: "DELETE" });
+      toast.success(data.message || "Card removed.");
+      await fetchCards();
+      return true;
+    } catch (err) {
+      toast.error(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Set a card as the default
+  const setDefaultCard = async (cardId) => {
+    setLoading(true);
+    try {
+      const data = await apiFetch(`/api/wallet/cards/${cardId}/default`, { method: "PATCH" });
+      toast.success(data.message || "Default card updated.");
+      await fetchCards();
+      return true;
+    } catch (err) {
+      toast.error(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Sync transaction logs and static data on user change
   useEffect(() => {
     if (user) {
       fetchTransactions();
       fetchBillers();
       fetchDepositSources();
+      fetchCards();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -279,12 +344,17 @@ export const BankProvider = ({ children }) => {
         transactions,
         billers,
         depositSources,
+        cards,
         loading: loading || authLoading,
         login,
         register,
         logout,
         fetchTransactions,
         updateProfileImage,
+        fetchCards,
+        addCard,
+        deleteCard,
+        setDefaultCard,
         addMoney: (amount, pin, source) =>
           runTransaction("/api/wallet/add-money", { amount, pin, source }),
         cashOut: (amount, pin, agentPhone) =>
