@@ -756,16 +756,74 @@ export default function Dashboard() {
 
           <div className="overflow-y-auto no-scrollbar flex-1 pb-4">
             {/* Conditional inputs */}
+
             {view === "add" && (
-              <div className="form-control mb-4">
+              <div className="mb-4">
                 <label className="label pb-1 select-none">
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200/40 pl-1">Deposit Source</span>
                 </label>
+
+                {/* Saved Cards — clickable thumbnails */}
+                {cards.length > 0 && (
+                  <div className="flex flex-col gap-2 mb-3">
+                    {cards.map((card) => {
+                      const cardLabel = `${card.brand} Card \u2022\u2022\u2022\u2022 ${card.last4}`;
+                      const isSelected = source === cardLabel;
+                      return (
+                        <button
+                          key={card._id}
+                          type="button"
+                          onClick={() => setSource(cardLabel)}
+                          className={`relative overflow-hidden flex items-center justify-between px-4 py-3 rounded-2xl border transition-all duration-200 cursor-pointer text-left ${
+                            isSelected
+                              ? "bg-indigo-950/60 border-indigo-500/50 shadow-[0_0_12px_rgba(99,102,241,0.2)]"
+                              : "bg-white/5 border-white/[0.08] hover:border-white/20"
+                          }`}
+                        >
+                          {/* Glow when selected */}
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-indigo-500/5 pointer-events-none rounded-2xl" />
+                          )}
+                          <div className="flex items-center gap-3 relative z-10">
+                            {/* Brand mark */}
+                            <div className="w-9 h-6 rounded-md bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center shrink-0">
+                              {card.brand === "Visa" && <span className="text-white font-black italic text-[9px] tracking-tight">VISA</span>}
+                              {card.brand === "Mastercard" && (
+                                <div className="flex">
+                                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                                  <div className="w-3 h-3 rounded-full bg-amber-400/80 -ml-1.5" />
+                                </div>
+                              )}
+                              {card.brand === "Amex" && <span className="text-cyan-300 font-black text-[7px] tracking-widest">AMEX</span>}
+                              {card.brand === "Other" && <i className="fa-solid fa-credit-card text-indigo-300/60 text-[10px]" />}
+                            </div>
+                            <div>
+                              <p className="text-white font-bold text-xs leading-none">\u2022\u2022\u2022\u2022 {card.last4}</p>
+                              <p className="text-[8px] text-indigo-200/40 font-bold mt-0.5">{card.cardholderName}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 relative z-10">
+                            {card.isDefault && (
+                              <span className="text-[7px] font-black uppercase tracking-widest bg-indigo-500/15 border border-indigo-400/20 text-indigo-400 px-1.5 py-0.5 rounded-full">Default</span>
+                            )}
+                            {isSelected && <i className="fa-solid fa-circle-check text-indigo-400 text-sm" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Other Sources */}
+                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-200/30 pl-1 mb-2">
+                  {cards.length > 0 ? "Or Other Source" : "Select Source"}
+                </p>
                 <select
-                  value={source}
+                  value={cards.some(c => source === `${c.brand} Card \u2022\u2022\u2022\u2022 ${c.last4}`) ? "" : source}
                   onChange={(e) => setSource(e.target.value)}
                   className="select select-bordered w-full rounded-2xl bg-[#131622] border border-white/[0.08] h-12 px-4.5 font-bold text-xs text-white focus:outline-none focus:border-indigo-500/80 focus:ring-4 focus:ring-indigo-500/10 cursor-pointer"
                 >
+                  <option value="" disabled>{cards.length > 0 ? "— choose other source —" : "Select a source"}</option>
                   {depositSources.map((ds) => (
                     <option key={ds._id} value={ds.name}>
                       {ds.name} {ds.details ? `(${ds.details})` : ""}
@@ -774,6 +832,7 @@ export default function Dashboard() {
                 </select>
               </div>
             )}
+
 
             {view === "bill" && (
               <div className="form-control mb-4">
