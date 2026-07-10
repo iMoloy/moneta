@@ -680,8 +680,6 @@ export default function Dashboard() {
 
                     {/* Action buttons */}
                     <div className="flex gap-2 relative z-10 pt-1 border-t border-white/5">
-                      {/* Action buttons */}
-                    <div className="flex gap-2 relative z-10 pt-1 border-t border-white/5">
                       {confirmDeleteCardId === card._id ? (
                         /* Inline delete confirmation */
                         <>
