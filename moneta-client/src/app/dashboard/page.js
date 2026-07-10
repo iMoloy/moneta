@@ -64,6 +64,7 @@ export default function Dashboard() {
   const [cardHolder, setCardHolder] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardBrand, setCardBrand] = useState("Other");
+  const [confirmDeleteCardId, setConfirmDeleteCardId] = useState(null);
   
   // Filtering & search
   const [txSearch, setTxSearch] = useState("");
@@ -679,23 +680,54 @@ export default function Dashboard() {
 
                     {/* Action buttons */}
                     <div className="flex gap-2 relative z-10 pt-1 border-t border-white/5">
-                      {!card.isDefault && (
-                        <button
-                          onClick={() => setDefaultCard(card._id)}
-                          disabled={loading}
-                          className="flex-1 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-400/20 text-indigo-300 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
-                        >
-                          Set Default
-                        </button>
+                      {/* Action buttons */}
+                    <div className="flex gap-2 relative z-10 pt-1 border-t border-white/5">
+                      {confirmDeleteCardId === card._id ? (
+                        /* Inline delete confirmation */
+                        <>
+                          <div className="flex-1 flex flex-col gap-1.5">
+                            <p className="text-[9px] text-rose-400 font-black uppercase tracking-wider text-center">
+                              <i className="fa-solid fa-triangle-exclamation mr-1" />
+                              Remove this card?
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setConfirmDeleteCardId(null)}
+                                className="flex-1 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-indigo-200/60 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => { deleteCard(card._id); setConfirmDeleteCardId(null); }}
+                                disabled={loading}
+                                className="flex-1 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-rose-400 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                              >
+                                <i className="fa-solid fa-trash-can mr-1 text-[8px]" />
+                                Confirm
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {!card.isDefault && (
+                            <button
+                              onClick={() => setDefaultCard(card._id)}
+                              disabled={loading}
+                              className="flex-1 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-400/20 text-indigo-300 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                            >
+                              Set Default
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setConfirmDeleteCardId(card._id)}
+                            className="flex-1 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-400/15 text-rose-400 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                          >
+                            <i className="fa-solid fa-trash-can mr-1 text-[8px]" />
+                            Remove
+                          </button>
+                        </>
                       )}
-                      <button
-                        onClick={() => deleteCard(card._id)}
-                        disabled={loading}
-                        className="flex-1 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-400/15 text-rose-400 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer"
-                      >
-                        <i className="fa-solid fa-trash-can mr-1 text-[8px]" />
-                        Remove
-                      </button>
                     </div>
                   </div>
                 ))}
